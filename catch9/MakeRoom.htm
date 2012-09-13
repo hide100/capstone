@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="Stylesheet" href="/StyleSheet2.css" />
+    <title>make room</title>
+    <script src="http://code.jquery.com/jquery-1.7.1.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+	
+	<!-- 잠깐 추가-->
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/jquery-ui.min.js"></script>
+	
+	
+	<!-- 잠깐 추가 -->
+    <script>
+        
+        // DIALOG Required Code
+        var prntWindow = getParentWindowWithDialog(); //$(top)[0];
+        var $dlg = prntWindow && prntWindow.$dialog;
+        
+        function getParentWindowWithDialog(){
+            var p = window.parent;
+            var previousParent = p;
+            while (p != null) {
+                if ($(p.document).find('#iframeDialog').length) 
+                    return p;
+                
+                p = p.parent;
+                
+                if (previousParent == p) 
+                    return null;
+                
+                // save previous parent
+                
+                previousParent = p;
+            }
+            return null;
+        }
+        
+        function setWindowReturnValue(value){
+            if ($dlg) 
+                $dlg.returnValue = value;
+            window.returnValue = value; // in case popup is called using showModalDialog
+        }
+        
+        function getWindowReturnValue(){
+            // in case popup is called using showModalDialog
+            
+            if (!$dlg && window.returnValue != null) 
+                return window.returnValue;
+            
+            return $dlg && $dlg.returnValue;
+        }
+        
+        if ($dlg) 
+            window.dialogArguments = $dlg.dialogArguments;
+        if ($dlg) 
+            window.close = function(){
+                if ($dlg) 
+                    $dlg.dialogWindow.dialog('close');
+            };
+    </script>
+	
+	
+    <script>
+        
+        function getCookie(cName){
+        
+            cName = cName + '=';
+            var cookieData = document.cookie;
+            var start = cookieData.indexOf(cName);//indexOf() method는 string안의 명시된 값의 첫 번째 발생의 위치를 반환
+            var cValue = '';
+            if (start != -1) {
+                start += cName.length;
+                var end = cookieData.indexOf(';', start);//indexOf(찾을문자열, 시작위치)
+                if (end == -1) 
+                    end = cookieData.length;
+                cValue = cookieData.substring(start, end);//substring(시작, 종료),substr(시작,길이) -문자열반환함수 
+            }
+            
+            return cValue;
+            
+        }
+    </script>
+	
+	
+    <script type="text/javascript">
+
+		var myname = getCookie('name');
+        function makeRoom(){
+			//잠깐 주석 처리
+        	/*
+			roomname = document.getElementById('roomname').value;
+			
+			if(roomname==""){
+				alert("방제목을 입력하세요.");
+				return false;
+			}
+			
+			//부모창에 roomname value 값 설정
+			opener.document.getElementById('roomname').value=document.getElementById('roomname').value;
+
+			window.open('about:blank', '_self').close();*/
+			
+			roomname = document.getElementById('roomname').value;
+			//setWindowReturnValue('The Return Value. And Passed Dialog Arguments: ' + window.dialogArguments);
+			setWindowReturnValue(roomname);
+        	window.close(); 
+			
+        }
+        
+        
+        function cancleRoom(){
+			//잠깐 주석
+        	//window.open('about:blank', '_self').close();
+			
+			window.close(); 
+        }
+			
+    </script>
+</head>
+<body>
+	
+	<div class="MakeRoomdiv" style=" width:353px; height:231px" >
+	  <!-- input type 크기  size 말고 width로 줘야 모든 브라우저에서 동일하게 보임 -->
+	  <div class="roomnamediv"  >
+	   <input type="text" id="roomname" class="roomname"   rows="1" style="width: 250px" />
+	  </div>
+	  
+	  <div class="privatediv" >
+      	<form name=private id="private" class="private" >
+          <select name=mytextarea style=" width:90px" >
+              <option name=one value=one > one </option>
+              <option name=two value=two> two </option>
+          </select>
+		</form>
+	  </div>
+	   
+	  <div class="passworddiv"  >
+	   <input type="text" id="password" class="password" size="10" rows="1" style="width: 90px; font-family: "굴림", Gulim ;font-size: 12pt"/>
+	  </div>
+	   
+	  <div class="gamemodediv" >
+	   <input type="text" id="gamemode" class="gamemode" size="4" rows="1" style="visibility: hidden;" style="font-family: "굴림", Gulim ;font-size: 12pt"/>
+	  </div>
+	  
+	  <div class="usercountdiv" >
+	  	
+	   <form name=usercount id="usercount" class="usercount" >
+          <select name=mytextarea style=" width:90px" >
+              <option name=one value=one> one </option>
+              <option name=two value=two> two </option>
+          </select>
+		</form>
+	  </div>
+	  
+	  <div class="selectbuttondiv" >
+	  	
+	   <img id="make" class="make" src="/make.png" onClick="makeRoom();">
+	   <img id="cancle" class="cancle" src="/cancle.png" onClick="cancleRoom();">
+	   
+	  </div>
+	   
+	</div>
+</body>
+</html>

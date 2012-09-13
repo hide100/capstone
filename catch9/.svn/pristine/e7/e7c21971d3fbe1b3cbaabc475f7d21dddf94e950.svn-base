@@ -1,0 +1,165 @@
+.header {
+    width: 1024px;
+	height: 78px;
+
+	background-image: url('lobbyheader.png');
+
+}
+
+.lay_header {
+    width: 1024px;
+	height: 78px;
+
+	background-image: url('lobbyheader.png');
+
+}
+
+
+.contents {
+    width: 1024px;
+    height: 688px;
+
+	background-image: url('lobbycontents.png');
+}
+
+
+.MakeRoomdiv {
+    width: 353px;
+    height: 231px;
+	
+
+	background-image: url('makeroom.png');
+}
+/*
+.RoomNamediv {
+	position: relative;
+	height: 30px;
+    left: 30px;
+  
+}*/
+
+.roomname {
+	position: absolute;
+	top: 49px;
+    left: 90px;
+  
+}
+
+.private{
+	
+	position: absolute;
+	top: 80px;
+    left: 90px;
+	
+}
+
+.password {
+	position: absolute;
+	top: 105px;
+    left: 90px;
+  
+}
+
+
+.gamemode{
+	position: absolute;
+	top: 160px;
+    left: 81px;
+  
+}
+
+.usercount{
+	position: absolute;
+	top: 158px;
+    left: 90px;
+  
+}
+
+
+.make{
+	position: absolute;
+	top: 207px;
+    left: 110px;
+  
+}
+
+.cancle{
+	position: absolute;
+	top: 207px;
+    left: 190px;
+  
+}
+
+
+.RoomList{
+	position: relative;
+	top: 38px;
+    left: 48px;
+  
+}
+
+.UserList{
+	position: relative;
+	top: 38px;
+    left: 44px;
+  
+}
+
+.ChattingRoom{
+	
+	position: relative;
+	top: 83px;
+	left: 49px;
+  
+}
+
+.ChatLine{
+	position: relative;
+	top: 171px;
+	left: 6px;
+
+}
+
+
+.UserInfo{
+	position: relative;
+	top: 79px;
+	left: 49px;
+  
+	
+}
+
+.Imoticon{
+	position: relative;
+	top: 25px;
+	left: 93px;
+}
+
+.Nick{
+	position: relative;
+	top: 23px;
+	left: 145px;
+	
+}
+
+.UserLevel{
+	position: relative;
+	top: 27px;
+	left: 145px;
+	
+}
+
+
+
+/*
+.roomname{
+	width:150px;
+}*/
+
+/*
+.ChatArea{
+	position: relative;
+	top: 70px;
+  
+}
+*/
