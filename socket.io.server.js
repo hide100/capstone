@@ -11,7 +11,7 @@ var server = http.createServer(function (request, response) {
         response.end(data);
     });
 });
-server.listen(52273);
+server.listen(80);
 
 // 소켓 서버를 생성 및 실행합니다.
 var io = socketio.listen(server);
