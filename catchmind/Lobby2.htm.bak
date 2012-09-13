@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script src= "/socket.io/socket.io.js"></script>  
+
+<meta name="viewport" content="user-scalable=no" />
+
+<link rel="stylesheet"  href="http://code.jquery.com/mobile/1.0a3/jquery.mobile-1.0a3.min.css" />
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.5.min.js"></script> 	
+<script type="text/javascript" src="http://code.jquery.com/mobile/1.0a3/jquery.mobile-1.0a3.min.js"></script>
+
+
+<!--해결-->
+ 
+<!--  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>-->
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/redmond/jquery-ui.css" type="text/css" />		
+
+
+
+ <script>
+            var $dialog = null;
+            
+            jQuery.showModalDialog = function(options){
+            
+                var defaultOptns = {
+                    url: null,
+                    dialogArguments: null,
+                    height: 'auto',
+                    width: 'auto',
+                    position: 'center',
+                    resizable: true,
+                    scrollable: true,
+                    onClose: function(){
+                    },
+                    returnValue: null,
+                    doPostBackAfterCloseCallback: false,
+                    postBackElementId: null
+                };
+                
+                var fns = {
+                    close: function(){
+                        opts.returnValue = $dialog.returnValue;
+                        $dialog = null;
+                        opts.onClose();
+                        if (opts.doPostBackAfterCloseCallback) {
+                            postBackForm(opts.postBackElementId);
+                        }
+                    },
+                    adjustWidth: function(){
+                        $frame.css("width", "100%");
+                    }
+                };
+                
+                // build main options before element iteration
+                
+                var opts = $.extend({}, defaultOptns, options);
+                
+                var $frame = $('<iframe id="iframeDialog" />');
+                
+                if (opts.scrollable) 
+                    $frame.css('overflow', 'auto');
+                
+                $frame.css({
+                    'padding': 0,
+                    'margin': 0,
+                    'padding-bottom': 10
+                });
+                
+                var $dialogWindow = $frame.dialog({
+                    autoOpen: true,
+                    modal: true,
+                    width: opts.width,
+                    height: opts.height,
+                    resizable: opts.resizable,
+                    position: opts.position,
+                    overlay: {
+                        opacity: 0.5,
+                        background: "black"
+                    },
+                    close: fns.close,
+                    resizeStop: fns.adjustWidth
+                });
+                
+                $frame.attr('src', opts.url);
+                fns.adjustWidth();
+                
+                $frame.load(function(){
+                    if ($dialogWindow) {
+                        var maxTitleLength = 50;
+                        var title = $(this).contents().find("title").html();
+                        
+                        if (title.length > maxTitleLength) {
+                            title = title.substring(0, maxTitleLength) + '...';
+                        }
+                        $dialogWindow.dialog('option', 'title', title);
+                    }
+                });
+                
+                $dialog = new Object();
+                $dialog.dialogArguments = opts.dialogArguments;
+                $dialog.dialogWindow = $dialogWindow;
+                $dialog.returnValue = null;
+            }
+            
+            function postBackForm(targetElementId){
+                var theform;
+                theform = document.forms[0];
+                theform.__EVENTTARGET.value = targetElementId;
+                theform.__EVENTARGUMENT.value = "";
+                theform.submit();
+            }
+        </script>
+		
+        <script>
+            
+            function getCookie(cName){
+            
+                cName = cName + '=';
+                var cookieData = document.cookie;
+                var start = cookieData.indexOf(cName);//indexOf() method는 string안의 명시된 값의 첫 번째 발생의 위치를 반환
+                var cValue = '';
+                if (start != -1) {
+                    start += cName.length;
+                    var end = cookieData.indexOf(';', start);//indexOf(찾을문자열, 시작위치)
+                    if (end == -1) 
+                        end = cookieData.length;
+                    cValue = cookieData.substring(start, end);//substring(시작, 종료),substr(시작,길이) -문자열반환함수 
+                }
+               
+                return cValue;
+                
+            }
+        </script>
+        <script type="text/javascript">
+            
+            
+            var sb;
+            var socket = io.connect();
+			
+			var myname = getCookie('name');
+        
+            function popup_page(url, w, h){
+                /*
+            	var url = '/make';
+            	
+            	
+                $.showModalDialog({
+                    url: url,
+                    dialogArguments: 'www.extremedev.blogspot.com',
+                    height: 900,
+                    width: 500,
+                    scrollable: false,
+                    onClose: function(){
+                        var returnedValue = this.returnValue;
+                        
+                        document.getElementById('roomname').value = returnedValue;
+                        
+                        room = document.getElementById('roomname').value;
+                        
+                        
+                        if (room == '') {
+                            alert('방 제목을 입력하세요.');
+                            return;
+                        }
+                        
+                        if (myname == null) {
+                            alert('쿠키 없다');
+                            return;
+                        }
+                        
+                        
+                        //새로 만든 이벤트 
+                        socket.emit('participate', room, myname, 'addroom');
+                    }*/
+					
+				var url = '/make';
+                $.showModalDialog({
+                    url: url,
+                    //dialogArguments: 'www.extremedev.blogspot.com',
+                    //height: 350,
+                    //width: 400,
+					width: 500,
+					height: 800,
+                    
+                    scrollable: false,
+					//scrollable: true,
+                    onClose: function(){
+                        var returnedValue = this.returnValue;
+                        
+                        document.getElementById('roomname').value = returnedValue;
+                        
+                        room = document.getElementById('roomname').value;
+                        
+                        if (room == '') {
+                            alert('방 제목을 입력하세요.');
+                            return;
+                        }
+                        
+                        if (myname == null) {
+                            alert('쿠키 없다');
+                            return;
+                        }
+                        
+                        
+                        //새로 만든 이벤트 
+                        socket.emit('participate', room, myname, 'addroom');
+                    }
+                });
+   
+            }
+			
+
+            $(document).ready(function(){
+				
+
+				// AJAX 수행(전체 기존에 있던 방 보여주기 위해 ,array로 받음)
+                $.getJSON('/room', function(data){
+					
+                    $.each(data, function(index, item){
+						 
+                        var $a = $('<a/>', {
+                            href: '',
+                            text: item,
+							click: function(){
+                                joinRoom(item);
+                            }
+                        });
+                        
+                        //data-icon="false"
+                        
+                        /*
+                        var $li = $('<li/>', {
+						
+                        }).append($a);*/
+                        
+                        var $li = $('<li/>', {
+    						
+                        }).attr("data-icon","false").append($a);
+                        
+                        
+                        
+                        $('#RoomList_ul').append($li);
+						 
+						//이거 해줘야 jquery mobile이 적용 된다.!!!!!!!!!!!!!!!!!!!!!!
+						$('#RoomList_ul').listview("refresh");
+
+                    });
+ 
+                });
+				
+				
+				//처음 페이지 로드 될때 경우
+                $.getJSON('/user', function(data){
+                	
+                	//alert('user 전');
+                    // 반복문
+                    $.each(data, function(index, item){
+                    	
+                        var exist_alredy = 0;
+                        
+                        var ul = document.getElementById("UserList_ul");
+                        
+                        var aNodes = ul.getElementsByTagName("a");
+                        
+                        for (i = 0; i < aNodes.length; i++) {
+                        
+                            if (item == aNodes[i].text) 
+                                exist_alredy = 1;
+                            
+                        }
+						
+						
+                        if (exist_alredy == 0) {
+                                                	
+    						//$('#UserList_ul').append('<li><a>'+item+'</a></li>');
+							
+							
+                            var $a = $('<a/>', {
+                                href: '',
+                                text: item
+                            });
+                            
+         
+                            var $li = $('<li/>', {}).attr("data-icon", "false").append($a);
+							
+							$('#UserList_ul').append($li);
+   						 
+   						 	//이거 해줘야 jquery mobile이 적용 된다.!!!!!!!!!!!!!!!!!!!!!!
+   						 	$('#UserList_ul').listview("refresh");
+
+                            
+                        }
+                      
+                    });
+                });
+				
+				//새로운 사용자 들어올 때 필요
+				socket.emit('auto',myname);
+				
+				socket.on('auto', function(data){
+				   
+				   
+				   var exist_alredy = 0;
+				   
+				   var ul = document.getElementById("UserList_ul"); 
+					
+				   var aNodes = ul.getElementsByTagName("a");
+					
+				   for(i=0 ;i<aNodes.length;i++){
+				   	
+					if(data == aNodes[i].text)
+						exist_alredy = 1;
+					
+				   }	
+						
+					//alert('auto aNode 크기: '+aNodes.length);
+					
+					//alert('auto aNode 값: '+aNodes[0].text);
+					
+
+                    if (exist_alredy == 0) {
+                						
+                    	//$('#UserList_ul').append('<li><a href="#page1">'+item+'</a></li>');
+						
+						 var $a = $('<a/>', {
+                                href: '',
+                                text: data
+                            });
+                            
+         
+                         var $li = $('<li/>', {}).attr("data-icon", "false").append($a);
+   						 
+						 $('#UserList_ul').append($li);
+						 
+						 //이거 해줘야 jquery mobile이 적용 된다.!!!!!!!!!!!!!!!!!!!!!!
+						$('#UserList_ul').listview("refresh");
+
+                        
+                    }
+
+					
+				});
+				
+				
+				
+				document.getElementById('nickname').innerHTML=myname;
+				
+				
+				//문제: 모든 사용자가 로비에 있을 때 자동으로 location으로 넘어가 지는데
+				//socket 값 저장 안도니 있으므로? nick 페이지로 이동된다.
+				//그러므로 location으로 넘어가는 애는 방 만든애만 그렇게 되게 해야 된다.
+				//서버에서 전체 emit하고  private emit을 주게 해야 된다.
+                socket.on('addroom', function(data, success){
+                	
+					if(success ==0){
+						alert('똑같은 이름의 방이 있습니다.');
+	
+					}
+					
+					if (success == 1) {
+								
+						//$('#RoomList_ul').append('<li><a href="#page1">'+data+'</a></li>');
+						
+						
+                        var $a = $('<a/>', {
+                            href: '',
+                            text: data,
+                            click: function(){
+                                joinRoom(data);
+                            }
+                        });
+						
+                        
+                        var $li = $('<li/>', {}).attr("data-icon", "false").append($a);
+						
+						$('#RoomList_ul').append($li);
+						 
+						//이거 해줘야 jquery mobile이 적용 된다.!!!!!!!!!!!!!!!!!!!!!!
+						$('#RoomList_ul').listview("refresh");
+						
+					}
+
+                });
+				
+				socket.on('location', function(data){
+					setTimeout(function(){
+                
+                        location = '/canvas/' + data;
+                    }, 10);
+					
+				});
+          
+				
+				
+                
+                socket.on('lobby_message', function(data){
+                
+                    var ca = document.getElementById('ChatArea');
+                    var p = document.createElement("div");
+  
+                    if (data.name != null) {
+                        var span = document.createElement("span");
+                        span.innerHTML = data.name + ': ';
+                        p.appendChild(span);
+                    }
+					
+                    p.appendChild(document.createTextNode(data.message));
+                    ca.appendChild(p);
+                    ca.scrollTop = 50000;
+                    
+     
+                });
+				
+            
+                $('.ChatLine').keyup(function(event){
+
+                    if (event.keyCode == 13) { // 13이 enter키 코드 값이다.
+ 
+                        socket.emit('lobby_message', {
+                            name: myname,
+                            message: $('.ChatLine').val(),
+                            date: new Date().toUTCString(),
+                      
+                        });
+                        
+                        document.getElementById('ChatLine').value = '';
+                    }
+     
+                });
+				
+				
+    
+      	 });
+            
+
+			
+			function joinRoom(value){
+				
+			       var room = value;
+					
+				   if(myname ==''){
+						alert('닉네임을 입력하세요.');
+						return;
+					}
+					
+					if(myname ==null){
+						alert('닉네임을 입력하세요.');
+						return;
+					}
+					
+					//새로 만든 이벤트 
+					socket.emit('participate', room,myname,'join');
+					
+					
+					setTimeout(function () {
+						location = '/canvas/' + room;
+
+					}, 10);
+			}
+			
+			/*
+            window.addEventListener('load', function(){
+				alert('hi');
+                setTimeout(scrollTo, 0, 0, 1);
+            }, false);*/
+			
+        </script>
+
+</head>
+<body>
+<!-- root page -->
+<div data-role="page" style="padding:0; border:0;  width:1024px;" >
+	
+	<div data-role="header" class="lay_header" style="padding:0; border:0; height:300p; width: 1024px; height: 78px; background-image: url('lobbyheader.png');">
+		<img id="makeroomb" src="/makeroomb.png"  onmouseover="this.src='/makeroomon.png';" onmouseout="this.src='/makeroomb.png';" onclick="popup_page('/MakeRoom','620','270')" ontouchstart="popup_page('/MakeRoom','620','270')" >
+	</div>
+	
+	
+	<div data-role="content" style="padding:0; border:0; width:1024px; height:688px; background-image: url('lobbycontents.png');">
+		<div id=a>
+			<span class="RoomList" style="float: left; 	position: absolute; top: 99px; left: 49px;  width:594px; height:360px">
+				<ul class="RoomList_ul" id="RoomList_ul"  data-role="listview" data-inset="true" data-theme="d" data-dividertheme="d" >
+					<!--  <li data-role="list-divider"></li>-->
+					<!--
+					<li data-icon="false"><a>page1</a></li>
+					<li data-icon="false"><a >page2</a></li>
+					<li data-icon="false"><a >page3</a></li>
+					-->
+				</ul>	
+			</span>
+			
+				<span class="UserList" style="float: left; position: absolute; top: 99px; left: 699px; width:270px ; height:327px">
+				<ul class="UserList_ul"  id="UserList_ul" data-role="listview" data-inset="true" data-theme="d" data-dividertheme="d" >
+					<!--  <li data-role="list-divider"></li>-->
+					<!--
+					<li data-icon="false"><a >page1</a></li>
+					<li data-icon="false"><a >page2</a></li>
+					<li data-icon="false"><a >page3</a></li>
+					-->
+				</ul>	
+			</span>
+		</div>
+		
+		
+		<div id=b>
+                <span class="ChattingRoom" style="float: left; 	position: absolute; top: 524px;left: 49px;">
+                    <div id="ChatArea" style='border:1px solid #aaa; width:595px; height:198px; overflow:auto;'>
+                    	<input type="text" id="ChatLine" class="ChatLine" size="81" rows="1" onkeyup="hi()" style=" width:525px; height:15px; 	position: relative;top: 164px;left: 6px"/>
+					</div>
+                    <!--</span>--><!--<span class="ChatLine2" style="display:inline-block">-->
+					
+                    
+                </span>
+				
+                <span class="UserInfo" style="float: left; 	position: absolute; top: 540px; left: 740px;">
+				 	
+					<span class="Profile" style="float: left;">
+                    	<div class="Imoticon" >
+                    		<img class="Imoimg" src="/imo.jpg">
+                    	</div>
+					</span>	
+						
+					<span class="Info" style="float: left;">
+						<div class="Nick" style="	position: relative; left: 30px;">
+							<font id="nickname"> Guest </font>
+						</div>
+						<div class="UserLevel " style="	position: relative; left: 30px; margin-top: 5px;">
+							<font id="level"> F </font>
+						</div>
+					</span>
+                    
+                </span>
+         </div>
+	</div>
+	
+	<!--  <input type="text" id="roomname" class="roomname" value="hi" size="4" rows="1" style="display: none; visibility:hidden;"/>-->
+	
+	<p>
+          <!--  <input type="button" onclick="popup_page('/MakeRoom','620','270')" value="이벤트01">-->
+        </p><input type="text" id="roomname" class="roomname" size="4" rows="1" style="display: none; visibility:hidden;"/>         
+</body>
+</html>
+

@@ -1,0 +1,1424 @@
+//1. 전역 변수
+//모듈 추출
+var connect = require('connect');
+var ejs = require('ejs');
+var fs = require('fs');
+var socketio = require('socket.io');
+
+//추가
+var url = require('url');
+
+
+//전역 변수 선언 및 초기화 
+//방 정보 배열 (이후에 제거, 우선 간단하게 방 제목만 갖고 있음)
+var roomArray = [];
+var timerArray = [];
+
+var userArray = [];
+
+// Room class 타입 배열
+var roomArray2 =[]; 
+
+var gamestartflag = 0;
+
+// 웹 서버 생성 및 실행
+var server = connect.createServer();
+
+var current_word='';
+
+var correct=false;
+
+var correct_name=false;
+
+var first_check=0;
+
+var roomCount =0;
+
+//단어 호출 됐는지 보는 flag 배열
+var count_array = new Array();
+
+
+
+
+//2. 클래스 
+// 사용자 정보 class
+function User(name,socket_id){
+	this.name = name;
+	this.socket_id = socket_id;
+	
+	this.point =0;
+	this.player =0;
+	
+}
+
+// 방 정보 class
+function Room(name){
+	this.name = name;
+	
+	//멤버 변수는 var로 정의 하면 안되고 this로 정의 해야되는게 아니고
+	//접근할때 무조건 this.변수명으로 해야됌
+	//var userArray = [];
+	
+	//타입은 User 타입으로 넣기
+	this.userArray = new Array();
+	this.usercount = 0;
+	this.turncount = 0;
+	this.examiner = -1;
+	
+	this.addUser = addUser;
+	this.show = show;
+	this.getExaminer = getExaminer;
+
+	
+	//deleteUser 도 추가 하기
+}
+
+
+//3. 함수
+
+//멤버 함수
+function addUser(userinfo){
+	//멤버 변수에 접근 하려면 this.count로 접근
+	this.userArray[this.usercount++] = userinfo;
+	//console.log('room 객체에 사용자 추가하기 인원수: '+this.usercount);
+}
+
+//멤버 함수
+function show(){
+	for(i=0; i< this.usercount ;i++){
+		//console.log(i+'번째: '+ this.userArray[i].name);	
+	}
+}
+
+//멤버 함수
+function getExaminer(){
+	if(this.examiner<this.usercount-1){
+		this.examiner++;	
+	}
+	else if(this.examiner>=this.usercount-1){
+		this.examiner=0;
+	}
+	return this.examiner;
+}
+
+
+//게임 진행 여부 판단 함수
+function isOk(roomname){
+		var current_room;
+     	for (i = 0; i < roomCount; i++) {
+			if (roomArray2[i].name == roomname) {
+				current_room = roomArray2[i];
+				break;
+			}
+		}
+		
+		if(current_room==null){
+			return false;
+		}
+		
+		if(current_room.usercount>=3){
+			return true;
+		}else{
+			return false;
+		}
+}
+
+function searchRoom(roomname){
+		var current_room;
+     	for (i = 0; i < roomCount; i++) {
+			if (roomArray2[i].name == roomname) {
+				current_room = roomArray2[i];
+				break;
+			}
+		}
+		
+		if(current_room==null){
+			return;
+		}
+		
+		return current_room;
+	
+}
+
+//current_room type은 객체 타입
+function searchUser(current_room, username){
+	var current_user;
+	
+	for (j = 0; j < current_room.usercount; j++) {
+		if (current_room.userArray[j].name == username) {
+			current_user = current_room.userArray[j];
+			is_search = true;
+			break;
+		}
+	}
+	
+	return current_user;
+	
+}
+
+
+//권한 확인 함수(그리기, 답 맞추기)
+function validation(room,username){
+	
+	
+	
+	var current_room = searchRoom(room);
+	if(current_room==null){
+		return;
+	}
+    var examiner_index = current_room.examiner;
+	
+	if(examiner_index==-1){
+		return true;
+	}
+	
+	if(current_room==null){
+		return;
+	}
+	
+    var examiner_name = current_room.userArray[examiner_index].name;
+    
+    
+    if (gamestartflag == 1 && username == examiner_name) {
+        return true;
+    }
+    else {
+        return false;
+    }
+	
+}
+
+function startGame(roomname){
+		
+		gamestartflag=1;
+		
+		/* chocieword 에 통합
+		var cur_room = searchRoom(roomname);
+		var turn_count = cur_room.turncount;
+		
+		
+		io.sockets.in(roomname).emit('gamestartflag',1,turn_count);
+		*/
+				
+		choiceWord(roomname);
+		var room_index;
+		
+		//방별로 interval을 다르게 걸어 줘야 함
+		for(i=0;i<roomArray.length;i++){
+			if(roomname == roomArray[i])
+			{
+				room_index= i;
+				break;
+			}
+		}
+		
+		
+		//timerID=setInterval( function() { choiceWord(roomname); }, 1000*140 ); 
+		timerArray[room_index]=setInterval( function() { choiceWord(roomname); }, 1000*140 );
+		
+}
+
+//단어 선택 함수
+function choiceWord(roomname)
+{
+	
+	var cur_room;
+	current_word;
+	cur_room=searchRoom(roomname);
+	
+	if(cur_room==null){
+		return;
+	}
+	
+	if(isOk(roomname) == false){
+		console.log('게임 진행 할 수 없음: 인원이 적음: '+roomname);
+
+			cur_room.turncount = 0;
+			cur_room.examiner = -1;
+
+			var all_nick = new Array();
+			var all_point = new Array();
+		
+			for(i=0;i<cur_room.usercount;i++){
+				all_nick[i] = cur_room.userArray[i].name;
+				all_point[i]=cur_room.userArray[i].point;
+			}
+		
+			
+			for (i = 0; i < all_point.length; i++) {
+				console.log('가기전에 확인');
+				console.log(i+ '번째 point :'+all_point[i]+'   nick: '+all_nick[i]);
+			
+			}
+			
+			
+			//방별로 timer 관리
+			var room_index;
+			
+			for(z=0; z<roomArray.length;z++){
+		
+				if(roomname == roomArray[i])
+				{
+					room_index= i;
+					break;
+				}
+			}
+			
+			clearTimeout(timerArray[room_index]);
+			//clearTimeout(timerID);
+
+
+			io.sockets.in(roomname).emit('end',all_point,all_nick);
+			gamestartflag=0;
+			
+			return;
+	}else if(cur_room.turncount >= 10){
+			console.log('턴 다 돌아 갔음 ');
+			
+			cur_room.turncount = 0;
+			cur_room.examiner = -1;
+
+			var all_nick = new Array();
+			var all_point = new Array();
+		
+			for(i=0;i<cur_room.usercount;i++){
+				all_nick[i] = cur_room.userArray[i].name;
+				all_point[i]=cur_room.userArray[i].point;
+			}
+		
+			
+			for (i = 0; i < all_point.length; i++) {
+				console.log('가기전에 확인');
+				console.log(i+ '번째 point :'+all_point[i]+'   nick: '+all_nick[i]);
+			
+			}
+		
+			//clearTimeout(timerID);
+			
+			//방별로 timer 관리
+			var room_index;
+			
+			for(z=0; z<roomArray.length;z++){
+		
+				if(roomname == roomArray[i])
+				{
+					room_index= i;
+					break;
+				}
+			}
+			
+			clearTimeout(timerArray[room_index]);
+			
+			
+			
+			
+			//10초 뒤에 게임 시작 (자동)
+            if (cur_room.usercount >= 3) {
+            
+				setTimeout(function(){
+					startGame(roomname);	    
+                            
+                }, 1000*10);
+				
+            }
+
+			io.sockets.in(roomname).emit('end',all_point,all_nick);
+			return;
+			
+	}
+	
+	
+	var turn_count = cur_room.turncount;
+	io.sockets.in(roomname).emit('gamestartflag',1,turn_count);
+	
+
+    	
+	//txt 파일에서 단어 읽어오기 
+	var data = fs.readFileSync('word.txt', 'utf8');	 
+	word_array = data.toString().split("\n");
+
+
+	
+	//단어 선택 여부 확인 flag 초기화
+	//사용자 point 값 초기화
+    if (cur_room.turncount == 0) {
+        for (i = 0; i < word_array.length; i++) {
+            count_array[i] = 0;
+        }
+		
+		for(j=0; j< cur_room.usercount;j++){
+			cur_room.userArray[j].point=0;
+		}
+    }
+	
+	console.log('게임 진행------------------------------');
+	cur_room.turncount++;
+	console.log('턴 수: '+cur_room.turncount);
+	
+
+				
+    //출제 되지 않은 단어 찾기 (다 출제 된 경우 생각 안해도 됌, 단어는 충분)
+    while (1) {
+        //20은 단어 개수  
+        var number = Math.floor(Math.random() * 20);
+        
+        if (count_array[number] == 0) {
+    
+	        current_word = word_array[number];
+            current_word = current_word.replace(/\s/g, '');
+            count_array[number] = 1;
+            //console.log(current_word);
+            
+            break;
+            
+        }
+        
+    }
+
+	
+	var examiner_socket_id;
+	var examiner_name;
+	var current_room;
+	
+	
+	//room이름으로 그방에서 문제낼 사람 찾기
+    current_room = searchRoom(roomname);
+	if(current_room==null){
+		return;
+	}
+	
+    var examiner_index = current_room.getExaminer();
+    
+    examiner_socket_id = current_room.userArray[examiner_index].socket_id;
+    examiner_name = current_room.userArray[examiner_index].name;
+	
+	
+	console.log('문제 출제자 이름: '+examiner_name);
+	console.log('문제 출제자 소켓 id: '+examiner_socket_id);
+	
+	var turn_count = cur_room.turncount;
+	
+	//출제자 누군지 모든 사용자 한테 알려주기
+	
+	//console.log('아직 이잖아');
+	var next_examiner_index;
+	var next_examiner_name;
+	
+	if(examiner_index<current_room.usercount-1){
+		next_examiner_index = examiner_index+1;
+	}
+	else if(examiner_index>=current_room.usercount-1){
+		next_examiner_index=0;
+	}
+	
+	var next_examiner_name = current_room.userArray[next_examiner_index].name;
+	
+	
+	//+1 해줘야함 0부터 시작 하니깐
+	//io.sockets.emit('examiner', examiner_index+1,examiner_name, next_examiner_index+1, next_examiner_name);
+	
+	io.sockets.in(roomname).emit('examiner', examiner_index+1,examiner_name, next_examiner_index+1, next_examiner_name);
+	
+	io.sockets.sockets[examiner_socket_id].emit('game',current_word,turn_count);
+	
+	
+	
+	
+}
+
+
+
+//4.미들 웨어 사용
+
+// Router 미들웨어 사용 (URL 패턴 별로 매칭, 함수 정의)
+server.use(connect.router(function (app) 
+{
+	
+	// GET - /
+    app.get('/', function (request, response) {
+		console.log('rootttttttttt');
+		//console.log('확:::::::::::::: '+request.host);
+		//console.log('확:::::::::::::: '+connect.host);
+		//console.log('확인:'+request); 
+		//var urlObj = url.parse(request.url, true);
+
+		//console.log('zzzzzzz: '+urlObj);
+		//console.log('확인:'+url.parse(request.url).host);
+
+
+		//console.log('로비 페이지 쿠키 분석 : '+JSON.stringify(request.cookies));
+        fs.readFile('Id2.htm', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+	
+	
+    app.post('/', function(request, response){
+        request.on('data', function(name){
+           
+            name2 = name.toString();
+            name2 = name2.split('=');
+        
+            
+            var namecookie = 'name=' + name2[1];
+            
+            userArray.push(name2[1]);
+           
+            //set-cookie 속성주기 이전 값 지워지게(overwrite)
+            
+            console.log('id post: ' + namecookie);
+            fs.readFile('Lobby2.htm', function(error, data){
+                response.writeHead(200, {
+                    'Content-Type': 'text/html',
+                    'Set-Cookie': [namecookie]
+                });
+                
+                
+                //name = 뒤에 split 해주고 위에 Set-cookie에 넣어주기 
+                response.end(data);
+            });
+        });
+        
+    });
+	
+	
+    app.get('/lobby', function(request, response){
+    
+        if (request.headers.cookie != null) {
+            fs.readFile('Lobby2.htm', function(error, data){
+                response.writeHead(200, {
+                    'Content-Type': 'text/html'
+                });
+                response.end(data);
+            });
+        }
+        else {
+            console.log('쿠키가 없다.  lobbyyyyyyyyy');
+            //response.writeHead(302, {'Location': 'http://127.0.0.1:52273/'});
+			response.writeHead(302,{'Location': '/'});
+            response.end();
+            
+        }
+        
+    });
+	
+	app.get('/make', function (request, response) {
+        fs.readFile('MakeRoom.htm', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+	
+	// GET - /Canvas/:room
+	app.get('/canvas/:room', function (request, response) {
+		
+		
+		console.log('누가 요청 ? '+request.url);
+		
+		request_url_split = (request.url).split('/');
+		var roomname= request_url_split[2];
+				
+		var current_room = searchRoom(roomname);
+		
+		
+		
+		//방 정보 없을 때 강제로 redirect
+		//에러 처리 함  
+		if(current_room != null){
+			
+			console.log("찾은 방: "+current_room.name);
+
+			//쿠키 정보 없을 때 강제로 redirect
+			if(request.headers.cookie != null){
+						
+					//cookie 정보 가져 올때 request.cookies는 안돼고
+					//request.headers.cookie 로 해야지 가져 올 수 있다.
+					 
+					//console.log('방들어갈때 쿠키 분석 : '+request.headers.cookie);
+					
+	
+					var namecookie_value = (request.headers.cookie).split('=');
+					var username= namecookie_value[1];
+					
+					console.log('요구 직전: '+current_room.name);
+					//console.log('요구 직전: '+current_room.userArray[0].name);
+					
+					var current_user = searchUser(current_room,username);
+					
+					if(current_user==null){
+						console.log('이런 사용자 없다');
+						//response.writeHead(302,{'Location': 'http://127.0.0.1:52273/'});
+						response.writeHead(302,{'Location': '/'});
+						response.end();  	
+						
+					}
+					
+					
+					console.log('tttttttttttttest');
+					
+			        fs.readFile('Canvas.htm', 'utf8', function (error, data) {
+			            response.writeHead(200, { 'Content-Type': 'text/html' });
+			            response.end(ejs.render(data, {
+			                room: request.params.room
+			            }));
+			        });
+			  }else{
+			  	console.log('쿠키가 없다. 2222222222');
+				//response.writeHead(302,{'Location': 'http://127.0.0.1:52273/'});
+				response.writeHead(302,{'Location': '/'});
+				response.end();  	
+			  }
+			  
+		}else{
+			console.log('그런 방 요청 해도없다.');
+			//response.writeHead(302,{'Location': 'http://127.0.0.1:52273/lobby'});
+			response.writeHead(302,{'Location': '/lobby'});
+			response.end(); //end도 꼭 줘야 한다.
+		
+		}
+		
+    });
+	
+	
+	//만약에 문제 있으면 user 객체에 player 값 추가해 주는 부분 보기 (participate2 안에)
+	// 추가 추가 추가 추가
+    // GET - /userinfo?room=방이름  으로 방정보 전송( 그방안에있는 user array 전송)
+    app.get('/userinfo', function (request, response) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+		
+		request_url_split = (request.url).split('=');
+		var roomname= request_url_split[1];
+				
+		//console.log('userinfo 방이름 '+ roomname);
+		
+		//요청할때 roomname 넘겨줘야 그방에 사용자들 정보 주지 
+		
+		
+		var current_room=searchRoom(roomname);
+		
+		//에러 처리 코드 추가 (8월 4일 추가)
+		if(current_room ==null){
+			console.log('그런 방 요청 해도없다.');
+			//response.writeHead(302,{'Location': 'http://127.0.0.1:52273/lobbyr'});
+			response.writeHead(302,{'Location': '/lobby'});
+			response.end(); //end도 꼭 줘야 한다.
+			return;
+		}
+		
+		
+		
+		//console.log('json json json 우리 방안에 몇명있게 '+current_room.usercount);
+		
+		//에러 나는 부분 613 *************
+		//특정 방안에 사용자 배열
+		var user_array= current_room.userArray;
+		//console.log('jjjjjjjjjjjjjj: '+JSON.stringify(user_array));
+        response.end(JSON.stringify(user_array));
+    });
+	
+	
+	  // GET - /room
+    app.get('/room', function (request, response) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+		//console.log('jjjjjjjjjjjjjj: '+JSON.stringify(roomArray));
+        response.end(JSON.stringify(roomArray));
+    });
+    
+    
+	  // GET - /user
+    app.get('/user', function (request, response) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify(userArray));
+    });
+	
+	
+	
+	
+	/*
+	
+	app.get('/unload', function (request, response) {
+		//console.log('로비 페이지 쿠키 분석 : '+JSON.stringify(request.cookies));
+        fs.readFile('unload.html', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+	
+	
+	app.get('/lay', function (request, response) {
+		//console.log('로비 페이지 쿠키 분석 : '+JSON.stringify(request.cookies));
+        fs.readFile('lay.html', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+	
+	
+    app.get('/jq', function (request, response) {
+		//console.log('로비 페이지 쿠키 분석 : '+JSON.stringify(request.cookies));
+        fs.readFile('jq.html', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+    
+    // GET - /
+    app.get('/', function (request, response) {
+		//console.log('로비 페이지 쿠키 분석 : '+JSON.stringify(request.cookies));
+        fs.readFile('Lobby.htm', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+	
+	app.get('/id', function (request, response) {
+		//console.log('id페이지 쿠키 분석 : '+JSON.stringify(request.cookies));
+        fs.readFile('Id2.htm', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+	
+	app.get('/lobbyr', function (request, response) {
+		
+		if (request.headers.cookie != null) {
+			fs.readFile('Lobbyr.htm', function(error, data){
+				response.writeHead(200, {
+					'Content-Type': 'text/html'
+				});
+				response.end(data);
+			});
+		}else{
+			console.log('쿠키가 없다.');
+			response.writeHead(302,{'Location': 'http://127.0.0.1:52273/id'});
+			response.end();  	
+	
+		}
+
+    });
+	
+	app.get('/make', function (request, response) {
+        fs.readFile('MakeRoom.htm', function (error, data) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(data);
+        });
+
+    });
+	
+	app.post('/id', function (request, response) {
+		request.on('data', function (name) {
+			//name2=name.split('=');
+			//name은 object 타입
+			//console.log('iddddddddddddddd: '+typeof(name) );
+			name2 = name.toString();
+			//console.log('iddddddddddddddd: '+typeof(name2) );
+			//console.log('iddddddddddddddd: '+ name2 );
+			name2=name2.split('=');
+			//console.log('iddddddddddddddd: '+ name2[1]);
+			
+			var namecookie='name='+name2[1];
+			
+			userArray.push(name2[1]);
+			//console.log('concat test : '+namecookie);
+			
+			//rsponse.setCookie("nnnnnnnnnnnname", name2[1]);
+			
+			//set-cookie 속성주기 이전 값 지워지게(overwrite)
+			
+			console.log('id post: '+namecookie);
+			fs.readFile('Lobbyr.htm', function (error, data) {
+				response.writeHead(200, { 
+				'Content-Type': 'text/html'
+				// cookie 모듈로 대체
+				, 'Set-Cookie': [namecookie]
+				});
+				
+	
+				//name = 뒤에 split 해주고 위에 Set-cookie에 넣어주기 
+				response.end(data);
+			});
+        });
+
+    });
+		
+	// GET - /Canvas/:room
+	   app.get('/canvas/:room', function (request, response) {
+		
+		console.log('누가 요청 ? '+request.url);
+		
+		request_url_split = (request.url).split('/');
+		var roomname= request_url_split[2];
+				
+		var current_room = searchRoom(roomname);
+		
+		//방 정보 없을 때 강제로 redirect
+		//에러 처리 함  
+		if(current_room != null){
+			
+			console.log("찾은 방: "+current_room.name);
+
+			//쿠키 정보 없을 때 강제로 redirect
+			if(request.headers.cookie != null){
+						
+					//cookie 정보 가져 올때 request.cookies는 안돼고
+					//request.headers.cookie 로 해야지 가져 올 수 있다.
+					 
+					//console.log('방들어갈때 쿠키 분석 : '+request.headers.cookie);
+					
+	
+					var namecookie_value = (request.headers.cookie).split('=');
+					var username= namecookie_value[1];
+					
+					console.log('요구 직전: '+current_room.name);
+					//console.log('요구 직전: '+current_room.userArray[0].name);
+					
+					var current_user = searchUser(current_room,username);
+					
+					if(current_user==null){
+						console.log('이런 사용자 없다');
+						response.writeHead(302,{'Location': 'http://127.0.0.1:52273/id'});
+						response.end();  	
+						
+					}
+					
+				
+			        fs.readFile('Canvas.htm', 'utf8', function (error, data) {
+			            response.writeHead(200, { 'Content-Type': 'text/html' });
+			            response.end(ejs.render(data, {
+			                room: request.params.room
+			            }));
+			        });
+			  }else{
+			  	console.log('쿠키가 없다.');
+				response.writeHead(302,{'Location': 'http://127.0.0.1:52273/id'});
+				response.end();  	
+			  }
+			  
+		}else{
+			console.log('그런 방 요청 해도없다.');
+			response.writeHead(302,{'Location': 'http://127.0.0.1:52273/lobbyr'});
+			response.end(); //end도 꼭 줘야 한다.
+		
+		}
+		
+    });
+	
+	
+	//만약에 문제 있으면 user 객체에 player 값 추가해 주는 부분 보기 (participate2 안에)
+	// 추가 추가 추가 추가
+    // GET - /userinfo?room=방이름  으로 방정보 전송( 그방안에있는 user array 전송)
+    app.get('/userinfo', function (request, response) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+		
+		request_url_split = (request.url).split('=');
+		var roomname= request_url_split[1];
+				
+		//console.log('userinfo 방이름 '+ roomname);
+		
+		//요청할때 roomname 넘겨줘야 그방에 사용자들 정보 주지 
+		
+		
+		var current_room=searchRoom(roomname);
+		
+		//에러 처리 코드 추가 (8월 4일 추가)
+		if(current_room ==null){
+			console.log('그런 방 요청 해도없다.');
+			response.writeHead(302,{'Location': 'http://127.0.0.1:52273/lobbyr'});
+			response.end(); //end도 꼭 줘야 한다.
+		}
+		
+		
+		
+		//console.log('json json json 우리 방안에 몇명있게 '+current_room.usercount);
+		
+		
+		//특정 방안에 사용자 배열
+		var user_array= current_room.userArray;
+		//console.log('jjjjjjjjjjjjjj: '+JSON.stringify(user_array));
+        response.end(JSON.stringify(user_array));
+    });
+	
+	
+	  // GET - /room
+    app.get('/room', function (request, response) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+		//console.log('jjjjjjjjjjjjjj: '+JSON.stringify(roomArray));
+        response.end(JSON.stringify(roomArray));
+    });
+    
+    
+	  // GET - /user
+    app.get('/user', function (request, response) {
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify(userArray));
+    });
+    */
+}));
+
+//Static 미들웨어 사용
+server.use(connect.static(__dirname + '/Resource'));
+
+// 5. 웹 서버 실행
+server.listen(80);
+
+
+// 6. 소켓 서버 생성 및 실행
+var io = socketio.listen(server);
+
+//(이거 설정 하니깐 됀다!!!!!!!!!!!!!!!!!!!!!!!!!!! 익스플로러 문제)
+//오래 테스트 하니깐 안될때 있다. 그러니깐 쿠키 지우고 시작
+//setTimeout 함수안에 location 넣어줘서 완벽히 해결
+
+io.configure(function() {
+io.set('transports', [
+    'websocket',
+    'flashsocket',
+    'htmlfile',
+    'xhr-polling',
+    'jsonp-polling'
+  ]);
+});
+
+/*
+Array.prototype.remove = function(idx) {
+    return (idx<0 || idx>this.length) ? this : this.slice(0, idx).concat(this.slice(idx+1, this.length));
+};*/
+
+Array.prototype.remove = function(from, to) {
+  var rest = this.slice((to || from) + 1 || this.length);
+  this.length = from < 0 ? this.length + from : from;
+  return this.push.apply(this, rest);
+};
+
+io.set('log level', 2);
+io.sockets.on('connection', function (socket) {
+	
+	socket.on('auto',function(myname){
+		
+		console.log('lobby 페이지 로드 될때 호출');
+		io.sockets.emit('auto', myname);
+	});
+	
+	
+	//disconnect
+	
+    socket.on('disconnect', function(data){
+		
+		//뒤로 가긴지 창 닫긴지 판단 해야 돼는데....
+		
+		var player_num ='';
+		console.log('disconnect==========================');
+		
+		
+		console.log('socket :'+socket.id);
+		
+		socket.get('room', function(error, room){
+			console.log('disc 의 방 :'+room);
+			
+
+			if(room==null){
+				return;
+			}
+			
+			
+			console.log('disc 맨 앞... 총 방의 수 : '+roomCount);
+			//총 방 정보 출력
+			for(k=0; k< roomCount;k++){
+				
+				console.log(k+'번째 방:  '+roomArray2[k].name);
+				
+			}
+			
+			
+			
+			var cur_room = searchRoom(room);
+			
+			if(cur_room==null){
+				return;
+			}
+			console.log('이 방안에 사용자 정보');
+			for(z=0;z<cur_room.usercount;z++)
+			{
+				console.log(z+'번째 사용자: '+cur_room.userArray[z].name);
+				
+			}
+			
+					
+			
+			//i: 방 인덱스  , j: 사용자 인덱스
+            for (i = 0; i < roomCount; i++) {
+                //방이름 배열에서 있는지 찾고
+                if (roomArray2[i].name == room) {
+                    for (j = 0; j < roomArray2[i].usercount; j++) {
+                        //그 방안에 이 사용자 있는지 찾고
+                        if (roomArray2[i].userArray[j].socket_id == socket.id) {
+                            console.log('찾았다~~~~~~~~~~~~~~~~: '+(j+1)+'번째 사용자 나감');
+                            
+							player_num = roomArray2[i].userArray[j].player;
+							
+							var out_play_name = roomArray2[i].userArray[j].name; 
+							for(b=0; b<userArray.length;b++){
+								
+								if(out_play_name == userArray[b]){
+									console.log('userArray에서도 빼주자, 이중 처리: '+userArray[b]);
+									userArray.remove(b);
+								}
+								
+							}
+							
+							
+							console.log('playernum : '+player_num);
+							console.log('방 안에 사용자 크기 전 결과: '+roomArray2[i].userArray.length);
+							console.log('방 안에 사용자 크기 결과: '+roomArray2[i].userArray.remove(j));
+							
+							
+							
+							for(k=0;k<roomArray2[i].userArray.length;k++){
+								console.log(k);
+								console.log(roomArray2[i].userArray[k].name);
+								
+							}
+							
+							roomArray2[i].usercount--;
+							
+							if(roomArray2[i].usercount==0){
+								console.log('방에서 사람 다 나가서 방 없앰');
+								
+								console.log('방 빼기 전에 개수 :       '+roomArray2.length);
+								
+								roomArray2.remove(i);
+								roomCount--;
+								
+								
+								//이중으로 돼있어서 이것도 해줘야 된다.
+								roomArray.remove(i);
+								
+								//roomArray2.length 0일때 그 값 출력 하게 해주니깐 에러!!!!!!!
+								//????????????????????????????????
+								
+								//if(roomArray2.length == 0 ){
+								//	console.log('걸림  0000000000000');
+								//}
+								
+								if(roomArray2.length != 0 ){
+									console.log('방개수 배열: '+roomArray2.length);
+									console.log('방개수 배열: '+roomCount);
+								}
+								
+							}
+							
+                            break;
+                        }
+                    }
+                }
+            }
+			
+			console.log(player_num+' 번째 애 나간다');
+			io.sockets.in(room).emit('disconnect',player_num);
+			
+		});
+
+		//io.sockets.emit('user disconnected!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    });
+	
+	
+	socket.on('lobby_message', function (data) {
+        // 클라이언트의 message 이벤트를 발생시킵니다.
+		console.log('lobby_message');
+        io.sockets.emit('lobby_message', data);
+    });
+	
+	socket.on('message', function(data)
+	{
+		//console.log('message log\n');
+		//console.log('입력한 메시지 :'+data.message);
+		
+		var correct_user_name='';
+		var correct_user_num='';
+		var correct_user_point='';
+		
+        
+        var current_room = searchRoom(data.room);
+		
+		//에러처리 함
+		if(current_room == null){
+			console.log('current room null ~~~~~~~~~~~');
+			return;
+		}
+		
+        var current_user = searchUser(current_room, data.name);
+        var player_num = current_user.player;
+		
+		
+		if(gamestartflag ==1 && current_word!='')
+		{
+		
+			data.message = data.message.replace(/\s/g, '');
+			 
+            if (current_word == data.message) 
+			{
+                socket.get('room', function(error, room)
+				{
+                
+                    var valid = validation(room, data.name);
+                    
+                    //출제자 외의 사람이 입력 했을때만 정답으로 인정
+                    if (valid == false) {
+                        console.log('정답 ');
+                        
+                        var current_room = searchRoom(data.room);
+                      
+                       
+                        //에러  처리 함
+                        if (current_room == null) {
+                            console.log('current room null ~~~~~~~~~~~');
+                            return;
+                        }
+                        
+                        var current_user = searchUser(current_room, data.name);
+                     
+                        current_user.point++;
+                        
+                        correct = true;
+                        
+                        correct_user_name = data.name;
+                        correct_user_num = current_user.player;
+                        correct_user_point = current_user.point;
+                        
+                        
+                        //방별로 timer 관리
+                        var room_index;
+                        
+                        for (z = 0; z < roomArray.length; z++) {
+                        
+                            if (data.room == roomArray[i]) {
+                                room_index = i;
+                                break;
+                            }
+                        }
+                        
+                        clearTimeout(timerArray[room_index]);
+						
+						//clearTimeout(timerID);
+						
+						io.sockets.in(data.room).emit('all', "#FFFFFF",1);
+                        
+                    }
+                    
+   
+                    
+                });
+            }
+			
+			// io.sockets.in(data.room).emit('message',data,player_num,correct_user_name, correct_user_num, correct_user_point);
+			
+		}
+		//console.log('message emit 하기 전: '+data+'   '+player_num+'  '+correct_user_name+'   '+correct_user_num+'  '+correct_user_point)
+		 io.sockets.in(data.room).emit('message',data,player_num,correct_user_name, correct_user_num, correct_user_point);
+		/*
+		else{
+				
+			io.sockets.in(data.room).emit('message',data,player_num,correct_user_name, correct_user_num, correct_user_point);
+		*/
+		 
+	});
+	
+ 
+ 	//처음 요청 자체를 http://127.0.0.1:52273/canvas/first 이렇게 하면 에러난다.
+	//해결 하자!!!
+	
+	//socket id는 canvas 페이지에서 event 발생 시킴
+	socket.on('participate2', function (roomname, myname) 
+	{
+		console.log(' participate2 '+roomname+'    '+myname);
+		
+		var is_search = false;
+		var current_room;
+		
+		for(i=0;i<roomCount;i++){
+			if(roomname == roomArray2[i].name){
+				//console.log('roomname : '+roomArray2[i].name);
+				
+				current_room = roomArray2[i]; 
+				for(j=0;j<current_room.usercount ;j++){
+					if( current_room.userArray[j].name == myname)
+					{
+						current_room.userArray[j].socket_id = socket.id;
+						
+						//participate 1 으로 옮김 player 값 증가시키는 코드
+						/*
+						current_room.userArray[j].player = current_room.usercount;
+						console.log('paticitpate2: 나는 '+current_room.userArray[j].name);
+						console.log('paticitpate2: 나는 '+current_room.usercount+'번째 사용자다? 맞나?????');
+						
+						console.log('paticitpate2: 나는 확인'+current_room.userArray[j].player+'번째 사용자다? 맞나?????');
+						
+						*/ 
+						is_search = true;
+						break;
+					}
+				}
+				
+				if(is_search == true){
+					break;
+				}
+				
+				
+			}
+		}
+		
+		//console.log('participate2 현재 방 안에 인원 수 :'+current_room.usercount);
+		
+		//내가 이방에 몇번째 player?
+		//var current_room = searchRoom(roomna)
+		
+		//밑에 부분 에러 나서 추가 (8/13)
+		if(current_room==null){
+			return;
+		}
+		
+		var player=current_room.usercount;
+		
+		//console.log('나는'+player+'번째 사용자임 ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ');
+		
+		//여기다 emit 추가해도 밑에 코드 실행 돼나? 화면에다 이미지 출력해 주라는 코드 삽입
+		io.sockets.in(roomname).emit('usericon',{
+			name: myname,
+			player: player
+		});
+		
+		//console.log('emit 해줘도 밑에꺼 출려됨');
+		
+		//이렇게 하니깐 한번만 호출돼지 setinterval 호출 안돼서..................
+		
+		//console.log('startgame 호출돼기전 roomname: '+roomname);
+		if(current_room.usercount>=3){
+			
+			startGame(roomname);
+		}
+		
+		
+	});
+	
+	
+	socket.on('participate', function (roomname, myname,type) 
+	{
+		console.log('participate');
+	
+		var user = new User(myname);
+		var success_flag= 1;
+		
+		if(type == 'addroom'){
+			console.log('방 만들기 ===============');
+			
+			//같은 이름 방 못 만들게 하기
+			for(i=0; i<roomCount; i++){
+				if(roomname == roomArray2[i].name){
+					success_flag = 0;
+					io.sockets.emit('addroom', roomname,success_flag);
+					return;
+				}
+			}
+			
+			
+			
+			roomArray.push(roomname);
+			timerArray.push(-1);
+			
+			//방 객체 만들기
+			var room = new Room(roomname);
+			room.addUser(user);
+			roomArray2[roomCount++] = room;
+			
+			success_flag= 1;
+			console.log('방 만들 수 있음 : '+success_flag);
+			io.sockets.emit('addroom', roomname, success_flag);
+			
+			io.sockets.sockets[socket.id].emit('location',roomname);
+			
+		}
+		else{
+			console.log('참여 하기 ===============');
+			for(i=0; i<roomCount; i++){
+				if(roomname == roomArray2[i].name){
+					roomArray2[i].addUser(user);
+				}
+			}
+		}
+		
+		//player값 설정 된다!!!
+		var current_room = searchRoom(roomname);
+		
+        //에러 처리 함
+        if (current_room == null) {
+            console.log('current room null ~~~~~~~~~~~');
+            return;
+        }
+		
+		var current_user = searchUser(current_room,myname);
+		
+		
+		current_user.player = current_room.usercount;
+		
+		
+		console.log('총 방 수: '+roomCount);
+		
+		
+		//방정보 확인 작업
+		/*
+		for(i=0 ; i<roomCount ;i++){
+			console.log(i +'번째 방 이름: '+roomArray2[i].name);
+			console.log('방안에 있는 사용자 수: '+roomArray2[i].usercount);
+			
+			console.log('방안에 있는 사용자들 ');
+			roomArray2[i].show();
+		}*/
+		
+    });
+	
+	
+	// join 이벤트
+    socket.on('join', function (data) 
+	{
+        socket.join(data);
+        socket.set('room', data);
+    });
+
+    
+	// draw 이벤트 (같은 방에 있는 client 에만 뿌려줌)
+    socket.on('draw', function (data) 
+	{	
+        socket.get('room', function (error, room) 
+		{
+			var valid= validation(room,data.name);
+			if(valid == true){
+				io.sockets.in(room).emit('line', data);
+			}else{
+				return;
+			}
+		
+        });
+    });
+	
+	// fill 이벤트
+	socket.on('fill', function (data,username,type) 
+	{
+		//console.log('fillllllllllllllllllllll');
+		//io.sockets.emit('all', data);
+		 socket.get('room', function (error, room) 
+		 {
+		 	//console.log('Get roomname'+room);
+        	var valid= validation(room,username);
+			if(valid == true){
+				//console.log('if=============');
+				io.sockets.in(room).emit('all', data,type);
+				
+			}else{
+				//console.log('else=============');
+				return;
+			}
+			
+			 //io.sockets.in(room).emit('all', data);
+	     });
+		
+    });
+	
+	
+	// dot 이벤트
+	socket.on('point', function (data) 
+	{
+		 socket.get('room', function (error, room) 
+		 {
+					
+			var valid= validation(room,data.name);
+			if(valid == true){
+				io.sockets.in(room).emit('dot',data);
+				
+			}else{
+				return;
+			}
+			
+		 });
+        
+    });
+	
+	socket.on('start', function (roomname)
+	{
+		gamestartflag= 1; 		
+		
+		var current_room = searchRoom(roomname);
+		
+		if(current_room==null){
+			return;
+		}
+		
+		
+		//판수
+		if(current_room.turncount<10){
+			startGame(roomname);	
+		}
+		else{
+			
+			console.log('턴 다 돌아 갔음 ');
+			
+			current_room.turncount = 0;
+			current_room.examiner = -1;
+			
+		
+			var all_nick = new Array();
+			var all_point = new Array();
+		
+			for(i=0;i<current_room.usercount;i++){
+				all_nick[i] = current_room.userArray[i].name;
+				all_point[i]=current_room.userArray[i].point;
+			}
+		
+		
+			//방별로 timer 관리
+			var room_index;
+			
+			for(z=0; z<roomArray.length;z++){
+		
+				if(roomname == roomArray[i])
+				{
+					room_index= i;
+					break;
+				}
+			}
+			
+			clearTimeout(timerArray[room_index]);
+		
+			//clearTimeout(timerID);
+			
+			
+			
+			//10초 뒤에 게임 시작 (자동)
+            
+            if (current_room.usercount >= 3) {
+            
+				setTimeout(function(){
+					startGame(roomname);	    
+                            
+                }, 1000*10);
+				
+            }
+	
+			io.sockets.in(roomname).emit('end',all_point,all_nick);
+			
+		}
+		
+		
+		
+	});
+		
+
+	
+});

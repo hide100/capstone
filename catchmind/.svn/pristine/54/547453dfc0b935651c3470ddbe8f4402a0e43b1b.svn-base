@@ -1,0 +1,111 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Untitled Page</title>
+    <script src="http://code.jquery.com/jquery-1.7.1.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    	
+		
+    function getCookie(cName){
+        
+        cName = cName + '=';
+        var cookieData = document.cookie;
+        var start = cookieData.indexOf(cName);//indexOf() method는 string안의 명시된 값의 첫 번째 발생의 위치를 반환
+        var cValue = '';
+        if (start != -1) {
+            start += cName.length;
+            var end = cookieData.indexOf(';', start);//indexOf(찾을문자열, 시작위치)
+            if (end == -1) 
+                end = cookieData.length;
+            cValue = cookieData.substring(start, end);//substring(시작, 종료),substr(시작,길이) -문자열반환함수 
+        }
+		return cValue; 
+        
+    }
+		
+        $(document).ready(function () {
+            // AJAX 수행(전체 기존에 있던 방 보여주기 위해 ,array로 받음)
+            $.getJSON('/room', function (data) {
+				
+                // 반복문
+                $.each(data, function (index, item) {
+					//alert('room '+item);
+                    // 문서 객체 추가
+                    $('<button></button>').attr({
+                        'data-room': item
+                    }).text('Room Name: ' + item).appendTo('#container');
+                });
+				
+				
+            });
+
+
+            // Socket 처리 (지금 추가된 방만 추가, 방이름만 받음)
+            var socket = io.connect();
+           
+		   
+		    socket.on('addroom', function (data) {
+                // 문서 객체를 추가
+                $('<button></button>').attr({
+                    'data-room': data
+                }).text('Room Name: ' + data).appendTo('#container');
+            });
+			
+			myname= getCookie('name');
+
+            // 이벤트를 연결
+            $('#container > button').live('click', function () {
+                
+                var room = $(this).attr('data-room');
+				
+				
+				//새로 만든 이벤트 
+				socket.emit('participate', room,myname,'join');
+				
+				
+				//여기 안에다 넣어보라네?
+				setTimeout(function () {
+					location = '/canvas/' + room;
+				
+				}, 10);
+
+ 
+            });
+
+            $('body > button').click(function () {
+              
+                var room = $('#room').val();
+				
+				//에러 처리 코드(방 입력 안했을때)
+				if(room==''){
+					alert('방 제목을 입력하세요.');
+					return;
+				}
+				
+			
+				//새로 만든 이벤트 
+				socket.emit('participate', room,myname,'addroom');
+
+				
+				setTimeout(function () {
+					location = '/canvas/' + room;
+				}, 10);
+
+
+            });
+
+        });
+    </script>
+</head>
+<body>
+    <span>ROOM: </span>
+    <input id="room" />
+    <button>CREATE ROOM</button>
+    <hr />
+    <div id="container"></div>
+	
+	 <!-- <input type="button" value="쿠키 보기" onclick="alert(getCookie('name'))">-->
+
+</body>
+</html>

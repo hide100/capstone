@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<!--
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+		-->
+		
+		<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=1, user-scalable=0" />
+        <title>Web Chat</title>
+        <link rel="Stylesheet" href="/StyleSheet.css" />
+        <script src= "http://code.jquery.com/jquery-1.7.1.js"></script>
+        <script src="/js/jquery-ui-1.8.16.custom.min.js "></script>
+        <script src= "/socket.io/socket.io.js"></script>
+		
+        <script>
+            function getCookie(cName){
+            
+                cName = cName + '=';
+                var cookieData = document.cookie;
+                var start = cookieData.indexOf(cName);//indexOf() method는 string안의 명시된 값의 첫 번째 발생의 위치를 반환
+                var cValue = '';
+                if (start != -1) {
+                    start += cName.length;
+                    var end = cookieData.indexOf(';', start);//indexOf(찾을문자열, 시작위치)
+                    if (end == -1) 
+                        end = cookieData.length;
+                    cValue = cookieData.substring(start, end);//substring(시작, 종료),substr(시작,길이) -문자열반환함수 
+                }
+                
+                return cValue;
+                
+            }
+        </script>
+        <script>
+            function hidden(current_table){
+                document.getElementById(current_table).style.visibility = 'hidden';
+                tid = -1;
+                
+            }
+            
+        </script>
+        <script>
+            var tid = -1;
+            
+            
+            var device_info = navigator.platform;
+            
+            $(document).ready(function(){
+            	
+            	
+            	
+            	if(device_info == 'iPad'){
+            		//alert('ipad 임');
+            		document.getElementById('shiftspan').style.display = 'inline';
+                    document.getElementById('shiftspan').style.visibility = 'visible';
+                    
+                    document.getElementById('altspan').style.display = 'inline';
+                    document.getElementById('altspan').style.visibility = 'visible';
+					
+					document.getElementById('handspan').style.display = 'inline';
+                    document.getElementById('handspan').style.visibility = 'visible';
+            	}
+            	
+            	$(document).bind("touchmove", function(event){
+                    event.preventDefault();
+                });
+            	
+				var socket = io.connect();
+                
+                socket.on('message', function(data, player_num, correct_user_name, correct_user_num, point){
+                
+					
+                    //말 풍선으로 교체 //몇초 동안만 보이게 하고 다시 hidden으로 바꾸기
+                    
+                    var current_table = 'player' + player_num + '_bubble_table';
+                    var current_player_font = 'player' + player_num + '_font';
+                    
+                    document.getElementById(current_table).style.visibility = 'visible';
+                    
+                    
+                    if (tid == -1) {
+                        tid = setTimeout(function(){
+                            hidden(current_table);
+                        }, 1000 * 4);
+                        
+                    }
+                    else {
+                        clearTimeout(tid);
+                        
+                        tid = setTimeout(function(){
+                            hidden(current_table);
+                        }, 1000 * 4);
+                        
+                    }
+                    
+                    
+                    document.getElementById(current_player_font).innerHTML = '<br>&nbsp;&nbsp;&nbsp;&nbsp;' + data.message;
+                    
+                    var myname = getCookie('name');
+                    
+                    //정답 맞춤
+                    if (correct_user_name != '') {
+                    
+                    				
+						document.all.x.innerHTML ="";
+						clearInterval(tid2);
+						
+                        
+                        toggle_visibility('show',correct_user_num);
+                        toggle_visibility('show',examiner_index);
+                        
+						
+                        
+                        document.getElementById('correct').style.backgroundImage = 'url(/correct.png)';
+                        
+                        
+                        
+                        document.getElementById('correct_table').style.display = 'inline';
+                        document.getElementById('correct_table').style.visibility = 'visible';
+                        
+                        //이너이너
+                        document.getElementById('correct').innerHTML ='<font color="blue">  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'+ examiner_name+'<br><br>'+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'+ correct_user_name+' </font>';
+                        
+                        
+                        setTimeout(function(){
+                        
+                            document.getElementById('correct_table').style.display = 'none';
+                            document.getElementById('correct_table').style.visibility = 'hidden';
+                            
+                       
+                        }, 2000);
+                        
+                    
+                        var player_point_id = 'player' + correct_user_num + '_point';
+                        document.getElementById(player_point_id).innerHTML = '정답 ' + point;
+                        
+                    }
+                    
+
+                    if (correct_user_name == myname) {
+                        socket.emit('start', '<%= room %>');
+                    }
+                    
+                });
+                
+                
+                $('.msg').keyup(function(event){
+                
+                    var myname = getCookie('name');
+                    
+                    if (event.keyCode == 13) { // 13이 enter키 코드 값이다.
+                        socket.emit('message', {
+                            name: myname,
+                            message: $('.msg').val(),
+                            date: new Date().toUTCString(),
+                            room: '<%= room %>'
+                        });
+                        
+                        document.getElementById('msg').value = '';
+                    }
+                    
+                    
+                });
+                
+            });
+        </script>
+        <script>
+            // Point 생성자 함수 생성
+            function Point(event, target){
+                this.x = event.pageX - $(target).position().left;
+                this.y = event.pageY - $(target).position().top;
+            }
+            
+        	function Point2(event, target) {
+                this.x = event.targetTouches[0].pageX - $(target).position().left;
+                this.y = event.targetTouches[0].pageY - $(target).position().top;
+            }
+        </script>
+        <script>
+            //전역 변수
+            var color = '#000000';
+            var width = 5;
+            var altkeyflag = 0;
+            var shiftkeyflag = 0;
+            
+            var saveoldx = 0;
+            var saveoldy = 0;
+            var count = 0;
+            var gamestartflag = 0;
+            
+            isleaveFlag = false;
+            
+            
+            var examiner_index;
+        	var examiner_name;
+        	var next_examiner_index; 
+        	var next_examiner_name;
+			
+			var before_examiner_index=-1;
+			    
+			var tid2=-1;       
+            
+            oldColor = 'black';
+            
+			//이번에 추가 (ipad 직선 그리기)
+			var element; 
+
+            
+            function colorChange(newColor){
+            
+                width = 5;
+                
+                if (oldColor != newColor) {
+                    oldColorpng = oldColor + '.png';
+                    newColorpng = newColor + 'p' + '.png';
+                    
+                    document.getElementById(newColor).src = "/" + newColorpng;
+                    document.getElementById(oldColor).src = "/" + oldColorpng;
+                    oldColor = newColor;
+                }
+                
+                if (newColor == "black") {
+                    color = '#000000';
+                    
+                }
+                else 
+                    if (newColor == "red") {
+                        color = '#FF0000';
+                        
+                    }
+                    else 
+                        if (newColor == "blue") {
+                            color = '#0000FF';
+                        }
+                        else 
+                            if (newColor == "green") {
+                                color = '#00FF00';
+                            }
+                            else 
+                                if (newColor == "yellow") {
+                                    color = '#FFFF00';
+                                }
+                                else 
+                                    if (newColor == "white" || newColor == "erase") {
+                                        color = '#FFFFFF';
+                                        width = 20;
+                                    }
+                
+                
+            }
+            
+            
+            /*
+            function startgame(){
+                socket.emit('start', '<%= room %>');
+            }*/
+            
+            
+            
+            /*************************************************************/
+            //전체 채우기 하고 점 찍기 안돼고,(점을 찍긴 찍는데 배경 채워준 색으로 계속 찍어) 
+            //shift 키 고정 (파이어 폭스 익스플로러도 그래....)
+            //shift 누르고 오른쪽 마우스로 그림 그릴때 메뉴 떠서 shift키 고정돼는 현상 있음
+            //팝업 창으로 뜨게 할 내용은 구글 크롬에서는 설정에서 팝업 허용 하기 해야 함
+            /*************************************************************/
+            
+            
+            //전체 지우기, 전체 채우기(type=1 새로운 턴 위해, type=0 전체 지우기 버튼 눌렀을때)
+            function fillout(a, type){
+                if (a == "eraseall") {
+                    context.fillStyle = "#FFFFFF";
+                }
+                else {
+                    context.fillStyle = color;
+                    
+                }
+                
+                var myname = getCookie('name');
+                
+                
+                if (gamestartflag == 1) {
+                
+                    socket.emit('fill', context.fillStyle, myname, type);
+                }
+                else {
+                    
+                    context.fillRect(0, 0, 517, 330);
+                }
+                
+            }
+            
+            
+            $(document).ready(function(){
+            
+                //문제 ajax에서도 추가되고 socket.on에서도 추가돼서 두번 추가됨
+                
+                
+                //AJAX 추가
+                $.getJSON('/userinfo?room=<%= room %>', function(data){
+                    var myname = getCookie('name');
+                    
+                    // 반복문
+                    $.each(data, function(index, item){
+                    
+                        if (item.name != myname) {
+                            
+                            //player1_nickname
+                            var player_nick = 'player' + item.player + '_nickname';
+                            var player_level = 'player' + item.player + '_level';
+                            
+                            
+                            
+                            var player_imo = '#player' + item.player + '_Imoticon';
+                            
+                            var player_img = 'player' + item.player + '_img';
+                            
+                            document.getElementById(player_nick).innerHTML = item.name;
+                            document.getElementById(player_level).innerHTML = 'F';
+                            
+                            document.getElementById(player_img).style.visibility = 'visible';                          
+                            
+                        }
+                        
+                        
+                    });
+                    
+                    
+                });
+                
+                
+                // Canvas 객체를 추출
+                canvas = document.getElementById('canvas');
+                context = canvas.getContext('2d');
+                
+                
+                var isDown = false;
+                var newPoint, oldPoint;
+                var outFocus = false;
+                
+                
+             
+                
+                //keyboard down  (누를 때 한번 만 발생? 아니면 누르고 있는 동안 계속 발생??)
+                document.onkeydown = function(event){
+                
+                    //alt키
+                    if (event.keyCode == 18) {
+						//alert('alt1');
+                        altkeyflag = 1;
+                    }//shift 키
+                    else 
+                        if (event.keyCode == 16) {
+                            shiftkeyflag = 1;
+                            
+                        }
+                    
+                    
+                };
+                
+                
+                //keyboard up (일단 간단 하게)
+                document.onkeyup = function(event){
+					//alert('no');
+                    altkeyflag = 0;
+                    shiftkeyflag = 0;
+                    
+                    count = 0;
+                    
+                };
+                
+                
+                //캔버스위에 포커스 없을때  //매개변수 event 생략 일단
+                canvas.onmouseleave = function(){
+                    //alert('밖에 나감');
+                    isleaveFlag = true;
+                    isDown = false;
+                    altkeyflag = 0;
+                    shiftkeyflag = 0;
+                    
+                };
+                
+                
+                canvas.onmouseup = function(){
+                
+                    isDown = false;
+                    count = 0;
+	
+                };
+                
+        
+				//ontouchcancle 안 먹는다.			
+				canvas.ontouchend = function () {
+	 
+    				isDown = false;
+    				count = 0;
+					
+    			};
+               
+                
+                canvas.onmousedown = function(event){
+                
+                    isDown = true;
+                    oldPoint = new Point(event, this);
+                    
+                    
+                    if (altkeyflag == 1) {
+						//alert('alt');
+                        fillout("k", 0); //k 그냥 의미 없음	매개 변수 타입은 맞춰줘야함 그래서 저쪽 함수에서 인식 string 비교로 했으니깐 그냥 k안돼 "k"가 돼
+                        altkeyflag = 0;
+                        
+                    }
+                    
+                    if ((event.button & 2)) {
+                    
+                        width = 20;
+                        
+                        
+                        context.lineJoin = 'round';
+                        context.lineCap = 'round';
+                    }
+                    else {
+                        width = 5;
+                    }
+                    
+                    
+                    context.lineWidth = width;
+                    context.strokeStyle = color;
+                    
+                    
+                    var myname = getCookie('name');
+                    
+                    
+                    if (gamestartflag == 1) {
+                        socket.emit('point', {
+                            width: width,
+                            color: color,
+                            x1: oldPoint.x,
+                            y1: oldPoint.y,
+                            name: myname
+                        });
+                    }
+                    else {
+                        context.beginPath();
+                        context.arc(oldPoint.x, oldPoint.y, width / 2, 0, 2 * Math.PI, true);
+
+                        context.fillStyle = color;
+                        context.fill();
+                        
+                    }
+                    
+                };
+                
+                
+                canvas.ontouchstart = function(event){
+                    
+                    isDown = true;
+                    oldPoint = new Point2(event, this);
+                    
+                    /*
+                    if (altkeyflag == 1) {
+                    
+                        fillout("k", 0); //k 그냥 의미 없음	매개 변수 타입은 맞춰줘야함 그래서 저쪽 함수에서 인식 string 비교로 했으니깐 그냥 k안돼 "k"가 돼
+                        altkeyflag = 0;
+                        
+                    }
+					*/
+					
+					if ((handflag==1)) {
+                    
+                        width = 20;
+                        
+                        
+                        context.lineJoin = 'round';
+                        context.lineCap = 'round';
+                    }
+                    else {
+                        width = 5;
+                    }
+					
+                    /*
+                    if ((event.button & 2)) {
+                    
+                        width = 20;
+                        
+                        
+                        context.lineJoin = 'round';
+                        context.lineCap = 'round';
+                    }
+                    else {
+                        width = 5;
+                    }
+                    */
+                    
+                    context.lineWidth = width;
+                    context.strokeStyle = color;
+                    
+                    
+                    var myname = getCookie('name');
+                    
+                    
+                    if (gamestartflag == 1) {
+                        socket.emit('point', {
+                            width: width,
+                            color: color,
+                            x1: oldPoint.x,
+                            y1: oldPoint.y,
+                            name: myname
+                        });
+                    }
+                    else {
+                        context.beginPath();
+                        context.arc(oldPoint.x, oldPoint.y, width / 2, 0, 2 * Math.PI, true);
+                        
+                    
+                        context.fillStyle = color;
+                        context.fill();
+                        
+                    }
+					
+					
+					//이번에 추가 (ipad 직선 그리기)
+					//var touch = event.touches[0]; 
+					//element = document.elementFromPoint(touch.pageX,touch.pageY); 
+
+                    
+                };
+                
+    
+                canvas.onmousemove = function(event){
+                
+                    if (isleaveFlag == true) {
+                    
+                        isleaveFlag = false;
+                        altkeyflag = 0;
+                        shiftkeyflag = 0;
+                        isDown = false;
+                        return;
+                    }
+                    
+                    
+                    if (isDown) {
+                        newPoint = new Point(event, this);
+                        
+                        
+                        if (shiftkeyflag == 1) {
+                        
+                        
+                            //기울기 처음에만 판단 해야돼 계속 판단하면 이상하게 그려짐
+                            
+                            if (count == 0) {
+                                x_axis_variation = newPoint.x - oldPoint.x;
+                                y_axis_variation = newPoint.y - oldPoint.y;
+                                gradient = y_axis_variation / x_axis_variation;
+                                
+                                
+                                if ((gradient >= -1) && (gradient <= 1)) {
+                                
+                                    saveoldy = oldPoint.y;
+                                    
+                                }
+                                else {
+                                    saveoldx = oldPoint.x;
+                                    
+                                }
+                                
+                                count = 1;
+                                
+                            }
+                            
+                            
+                            if ((gradient >= -1) && (gradient <= 1)) {
+                            
+                                newPoint.y = saveoldy;
+                            }
+                            else {
+                                newPoint.x = saveoldx;
+                            }
+                            
+                            
+                        }
+                        
+                        var myname = getCookie('name');
+                        
+                        //if, else  로 나누기 실제 그리는 함수는 func 으로 넘기기
+                        
+                        
+                        if (gamestartflag == 1) {
+                            socket.emit('draw', {
+                                width: width,
+                                color: color,
+                                x1: oldPoint.x,
+                                y1: oldPoint.y,
+                                x2: newPoint.x,
+                                y2: newPoint.y,
+                                name: myname
+                            
+                            });
+                        }
+                        else {
+                        
+                            context.lineWidth = width;
+                            
+                            context.strokeStyle = color;
+                            
+                            context.lineJoin = 'round';
+                            context.lineCap = 'round';
+                            context.beginPath();
+                            context.moveTo(oldPoint.x, oldPoint.y);
+                            context.lineTo(newPoint.x, newPoint.y);
+                            context.stroke();
+                            
+                        }
+                        
+                        oldPoint = newPoint;
+						
+						//이번에 추가(ipad 직선 그리기)
+                        /*
+                        if (element !== document.elementFromPoint(touch.pageX, touch.pageY)) {
+                            touchleave();
+                        }*/
+
+                        
+                    }
+                };
+                
+                
+                canvas.ontouchmove = function(event){
+                    /*
+                    if (isleaveFlag == true) {
+                    
+                        //alert('밖에 나갔다 옴 ');
+                        isleaveFlag = false;
+                        altkeyflag = 0;
+                        shiftkeyflag = 0;
+                        isDown = false;
+                        return;
+                    }*/
+                    
+                    
+                    if (isDown) {
+                        newPoint = new Point2(event, this);
+                        
+                        
+                        if (shiftkeyflag == 1) {
+							
+							/*
+							if( (newPoint.x - oldPoint.x >=20) || (newPoint.y - oldPoint.y >=20) ){
+								//alert('what ');
+								//alert('지금 x: '+ newPoint.x+',  이전 x:'+oldPoint.x ); 
+								//alert('지금 y: '+newPoint.y +',   이전 y'+oldPoint.y);
+								shiftkeyflag=0;
+								return; 
+								
+							}*/
+                        	
+                            //기울기 처음에만 판단 해야돼 계속 판단하면 이상하게 그려짐
+                            
+                            if (count == 0) {
+                                x_axis_variation = newPoint.x - oldPoint.x;
+                                y_axis_variation = newPoint.y - oldPoint.y;
+                                gradient = y_axis_variation / x_axis_variation;
+                                
+                                
+                                if ((gradient >= -1) && (gradient <= 1)) {
+                                
+                                    saveoldy = oldPoint.y;
+                                    
+                                }
+                                else {
+                                    saveoldx = oldPoint.x;
+                                    
+                                }
+                                
+                                count = 1;
+                                
+                            }
+                            
+                            
+                            if ((gradient >= -1) && (gradient <= 1)) {
+                            
+                                newPoint.y = saveoldy;
+                            }
+                            else {
+                                newPoint.x = saveoldx;
+                            }
+                            
+                            
+                        }
+                        
+                        var myname = getCookie('name');
+                        
+                        //if, else  로 나누기 실제 그리는 함수는 func 으로 넘기기
+                        
+                        
+                        if (gamestartflag == 1) {
+                            socket.emit('draw', {
+                                width: width,
+                                color: color,
+                                x1: oldPoint.x,
+                                y1: oldPoint.y,
+                                x2: newPoint.x,
+                                y2: newPoint.y,
+                                name: myname
+                            
+                            });
+                        }
+                        else {
+                        
+                            context.lineWidth = width;
+                            
+                            context.strokeStyle = color;
+                            
+                            context.lineJoin = 'round';
+                            context.lineCap = 'round';
+                            context.beginPath();
+                            context.moveTo(oldPoint.x, oldPoint.y);
+                            context.lineTo(newPoint.x, newPoint.y);
+                            context.stroke();
+                            
+                        }
+                        
+                        oldPoint = newPoint;
+                        
+                    }
+                };
+      
+ 
+                socket = io.connect();
+                                
+                socket.on('disconnect', function(data){
+                    //나가는 애는 이상하게 뜨지만 어차피 페이지 나가니깐 상관 없고
+                    //남아있는 애 에서만 나간애 지워주면 된다.
+                    
+                    var player_nick = 'player' + data + '_nickname';
+                    var player_level = 'player' + data + '_level';
+                    var player_point = 'player' + data + '_point';
+                    var player_imo = 'player' + data + '_Imoticon';
+                    var player_img = 'player' + data + '_img';
+                    
+                    document.getElementById(player_nick).innerHTML = '';
+                    document.getElementById(player_level).innerHTML = '';
+                    document.getElementById(player_point).innerHTML = '';
+                    
+                    document.getElementById(player_img).style.visibility = 'hidden';
+                
+                });
+                
+                //오류 코드 있으면 서버 실행 안됌(페이지는 보여져도)
+                //사용자 이모티콘 표시
+                socket.on('usericon', function(data){
+                
+                    var player_imo = '#player' + data.player + '_Imoticon';
+                    var player_nick = 'player' + data.player + '_nickname';
+                    var player_img = 'player' + data.player + '_img';
+                    var player_level = 'player' + data.player + '_level';
+                    
+                    document.getElementById(player_nick).innerHTML = data.name;
+                    
+                    document.getElementById(player_img).style.visibility = 'visible';
+                    
+                    document.getElementById(player_level).innerHTML = 'F';
+                
+                });
+                
+                
+              
+                socket.on('examiner', function(t_examiner_index,t_examiner_name,t_next_examiner_index,t_next_examiner_name){
+                	
+					
+                 	examiner_index = t_examiner_index;
+                	examiner_name = t_examiner_name;
+                	next_examiner_index = t_next_examiner_index;
+                	next_examiner_name = t_next_examiner_name;
+                	
+				
+					var turn_s = 'player'+examiner_index+'_turn';
+					
+					//이전 턴인 사용자 표시 지워주기
+					if(before_examiner_index!=-1){
+						
+						var before_turn_s = 'player'+(before_examiner_index)+'_turn';
+					
+						var turn_visible = document.getElementById(before_turn_s).style.visibility;
+                        
+                    	if (turn_visible == 'visible') {
+                        	document.getElementById(before_turn_s).style.visibility = 'hidden';
+							
+						}
+						
+					}
+					
+					setTimeout(function(){
+						document.getElementById(turn_s).style.visibility = 'visible';
+				
+					}, 3000);
+					
+					before_examiner_index= examiner_index;
+                	
+                });
+                
+                //}); 이렇게 닫아야함 그냥 } 이렇게 닫아서 에러
+				//(코드 잘못 짜면 그 부분 실행 안돼고 있어도 에러 남)
+				
+                
+                socket.on('all', function(data, type){
+                
+                    context.fillStyle = data;
+                
+                    context.fillRect(0, 0, 517, 330);
+                    
+                    //질문 이미지도 hidden하기(단 사용자가 실제로 전체 지우기 버튼 눌렀을때는 안돼게 해야함)
+                    if (type == 1) {
+                
+                        var visible = document.getElementById('question_table').style.visibility;
+                        
+                        if (visible == 'visible') {
+                        
+                            document.getElementById('question_table').style.visibility = 'hidden';
+							
+							
+                       }
+					  
+                    }
+					
+                });
+                
+                
+                socket.emit('join', '<%= room %>');
+                
+                var myname = getCookie('name');
+                
+                
+                socket.emit('participate2', '<%= room %>', myname);
+                
+                
+                socket.on('line', function(data){
+                    context.lineWidth = data.width;
+                    
+                    context.strokeStyle = data.color;
+                    
+                    context.lineJoin = 'round';
+                    context.lineCap = 'round';
+                    context.beginPath();
+                    context.moveTo(data.x1, data.y1);
+                    context.lineTo(data.x2, data.y2);
+                    context.stroke();
+                });
+                
+                
+                socket.on('dot', function(data){
+                
+                
+                    context.beginPath();
+                    context.arc(data.x1, data.y1, data.width / 2, 0, 2 * Math.PI, true);
+                    
+                
+                    context.fillStyle = data.color;
+                    context.fill();
+                    
+                });
+                
+           
+		   
+                socket.on('gamestartflag', function(data, turn_count){
+                
+                    gamestartflag = 1;
+					
+					//혼자서 그리다가 게임 시작되면 그림판 지워지고 시작되게 하려고...
+					fillout("eraseall", 1);
+                    
+					//첫번째 턴
+                    if (turn_count == 0) {
+						
+						//초기화
+						before_examiner_index = -1;
+                    
+                        //시작 화면 띄우기
+						document.getElementById('ready').style.display = 'inline';
+						document.getElementById('ready').style.visibility = 'visible';
+						
+						
+						setTimeout(function(){
+							document.getElementById('ready').style.display = 'none';
+							document.getElementById('ready').style.visibility = 'hidden';
+                            
+                            
+                        }, 1000);
+						
+						
+						setTimeout(function(){
+							document.getElementById('play').style.display = 'inline';
+							document.getElementById('play').style.visibility = 'visible';
+						}, 1500);
+						
+						setTimeout(function(){
+							document.getElementById('play').style.display = 'none';
+							document.getElementById('play').style.visibility = 'hidden';
+                            
+                            
+                        }, 2000);
+				    
+                    }
+					
+					
+                    setTimeout(function(){
+                        var round_count_image = '/round' + turn_count + '.png';
+                        var round_info_image = '/round_info.png';
+                        
+                        var url_s = 'url(/round' + (turn_count + 1) + '.png)';
+                        
+                        document.getElementById('round_count').style.backgroundImage = url_s;
+                        
+                        
+                        document.getElementById('round_info').style.backgroundImage = 'url(/round_info.png)';
+                        
+                        
+                        
+                        document.getElementById('round_table').style.display = 'inline';
+                        document.getElementById('round_table').style.visibility = 'visible';
+                        
+                        document.getElementById('round_info').innerHTML = '<font color="blue"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + examiner_name + '<br><br>' + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + next_examiner_name + ' </font>';
+                        
+                        
+                    }, 3000);
+                        
+                        
+                    setTimeout(function(){
+                    
+                        document.getElementById('round_table').style.display = 'none';
+                        document.getElementById('round_table').style.visibility = 'hidden';
+             
+                    }, 4500);
+                    
+                    
+                    
+                    setTimeout(function(){
+                        gap1 = 2;
+                        gap2 = 20;
+                        tid2 = setInterval('msg_time()', 1000);
+                    }, 4700);
+						
+
+                });
+                
+                
+                socket.on('game', function(current_word, turn_count){
+                		
+ 					//잠깐 주석 처리
+					/*
+                    setTimeout(function(){
+                    
+                        fillout("eraseall", 1);
+                        
+                    }, 3000);*/
+                    
+    
+                    setTimeout(function(){
+                        document.getElementById('question_table').style.visibility = 'visible';
+                        document.getElementById('question_font').innerHTML = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + current_word;
+						
+                    }, 4000);
+                    
+                    
+                });
+				
+                
+                socket.on('end', function(all_point,all_nick){
+					
+					//끝나면 턴 표시 지워주기(이번에 추가)
+					var turn_s = 'player'+examiner_index+'_turn';
+					document.getElementById(turn_s).style.visibility = 'hidden';
+					
+					
+     
+                    setTimeout(function(){
+                        document.getElementById('end').style.display = 'inline';
+                        document.getElementById('end').style.visibility = 'visible';
+								
+                        for (i = 0; i < all_nick.length; i++) {
+                            var nick_s = 'player'+(i+1)+'_end_nick';
+                            var point_s = 'player'+(i+1)+'_end_point';
+							
+							
+                            document.getElementById(nick_s).style.display = 'inline';
+                            document.getElementById(nick_s).style.visibility = 'visible';
+                            document.getElementById(nick_s).innerHTML = all_nick[i];
+                            
+     
+                            document.getElementById(point_s).style.display = 'inline';
+                            document.getElementById(point_s).style.visibility = 'visible';
+                            document.getElementById(point_s).innerHTML = all_point[i];
+                            
+                        }
+		
+					
+                    }, 3000);
+					
+                    
+                    
+                    setTimeout(function(){
+                    
+                        document.getElementById('end').style.display = 'none';
+                        document.getElementById('end').style.visibility = 'hidden';
+						
+						
+						for (i = 0; i < all_nick.length; i++) {
+                            var nick_s = 'player'+(i+1)+'_end_nick';
+                            var point_s = 'player'+(i+1)+'_end_point';
+							
+							
+                            document.getElementById(nick_s).style.display = 'none';
+                            document.getElementById(nick_s).style.visibility = 'hidden';
+                            document.getElementById(nick_s).innerHTML = '';
+                            
+        
+                            document.getElementById(point_s).style.display = 'none';
+                            document.getElementById(point_s).style.visibility = 'hidden';
+                            document.getElementById(point_s).innerHTML = '';
+                            
+                            
+                        }
+                        
+
+                    }, 7000);
+					
+					
+					gamestartflag = 0;
+				
+                });
+				
+                
+                
+            });
+        </script>
+		
+        <script language="javascript">
+            function Exit(){
+                if (document.readyState == "complete") {
+                    // 새로고침
+                    alert('새로고침');
+                }
+                else 
+                    if (document.readyState == "loading") {
+                        // 다른 사이트로 이동
+                        alert('다른 사이트로 이동');
+                    }
+            }
+        </script>
+        <script language="javascript" event="onunload" for="window">
+            Exit();
+        </script>
+		
+		
+		
+        <!-- 창 닫기,새로 고침 감지 , 뒤로가기-->
+        <script type="text/javascript">
+            //f5, 뒤로가기, 창 닫기
+            window.onbeforeunload = function(){
+               	//alert('all');
+                //socket.emit('disconnect');
+                
+                
+                
+                
+                //			socket.emit('disconnect',{
+                //				room: '<%= room %>',
+                //				name: myname
+                //			});
+                //
+                //alert('all');
+                closeIt();
+                return false;
+                
+            }
+        </script>
+        <script language='javascript'>
+        /*
+            function noEvent(){
+                //alert('new');
+                if (event.keyCode == 116) {
+                    event.keyCode = 2;
+                    return false;
+                }
+                else 
+                    if (event.ctrlKey && (event.keyCode == 78 || event.keyCode == 82)) {
+                        return false;
+                    }
+            }
+            
+            document.onkeydown = noEvent;
+			*/
+			
+        </script>
+		
+        <script type="text/javascript">
+            function toggle_visibility(hideorshow,player){
+        
+            	var player_blink = 'player'+player+'_blink';
+        
+                var e = document.getElementById(player_blink);
+                if (hideorshow == 'hide') {
+                    if (e.style.visibility == 'visible') {
+                        blink(6,player);
+                    }
+                    else {
+                        blink(7,player);
+                    }
+                }
+                else {
+                    if (e.style.visibility == 'visible') {
+                        blink(7,player);
+                    }
+                    else {
+                        blink(6,player);
+                    }
+                }
+            }
+            
+            function blink(count,player){
+                var count = count
+                var player_blink = 'player'+player+'_blink';
+                var e = document.getElementById(player_blink);
+        
+                e.style.visibility = (e.style.visibility == 'visible') ? 'hidden' : 'visible';
+                count--;
+                if (count <= 0) {
+                    return;
+                }
+                else {
+        
+                	setTimeout( function() { blink(count,player); }, 500 );
+                }
+            }
+        </script>
+
+		<script>
+			
+			var gap1 = 2;
+			var gap2 = 20;
+			
+			function msg_time() {
+		
+				//m = gap1 + "분 " + gap2 + "초";
+				if(gap2<10){
+					m = gap1 + " : " + "0"+gap2;	
+				}
+				else{
+					m = gap1 + " : " + gap2;
+				}
+				
+				document.all.x.innerHTML = "<font color='black' size='6'>" + m + "</font>";
+				
+				gap2--;
+				if (gap1 < 0) {
+					document.all.x.innerHTML ="";
+					clearInterval(tid2);
+				}
+				if(gap2 < 0){
+					gap2=59;
+					gap1--;
+				}
+			}
+		</script>
+		
+		
+		<script>
+		function closeIt()
+		  {
+			//alert('hi');
+		    if (self.screenTop > 9000) {
+		    	//alert('닫힘'+document.readyState+self.screenTop);
+		    } else {
+		        if(document.readyState == "complete") {
+		        	//alert('새로고침'+document.readyState+self.screenTop);
+		    	} else if(document.readyState == "loading") {
+		   			//alert('이동'+document.readyState);
+		   			
+		        	}
+		    }
+
+		  }
+		
+		   function shiftButton(){
+           	//alert('shift');
+           	
+           	if(shiftkeyflag==1){
+           		shiftkeyflag=0;
+           	}else{
+           		shiftkeyflag=1;
+           	}
+           }
+           
+           function altButton(){
+           	//alert('alt');
+           	
+			
+			fillout("k", 0);
+			/*
+           	if(altkeyflag==1){
+           		altkeyflag=0;
+           	}else{
+           		altkeyflag=1;
+           	}*/
+           }
+		   
+		   var handflag=0;
+		   
+		   function handButton(){
+		   	
+			if(handflag==0){
+				//alert('0');
+				//context.lineWidth = 20;
+				
+				//잠깐 
+				/*
+                width = 20;            
+                context.lineJoin = 'round';
+                context.lineCap = 'round';
+                */
+				handflag=1;
+			}else{
+				//alert('1');
+				
+				//context.lineWidth = 5;
+				
+				//잠깐
+				//width = 5;
+				handflag=0;
+			}
+			
+		   }
+
+
+           function touchleave(){
+               console.log("영역 나감");
+           }
+
+		</script>
+
+
+
+</head>
+    <body onContextmenu="return false;">		  
+        <div class="header">
+        </div>
+        <div class="MainBody">
+            <div class="left">
+                <div class="player1" id="player1" style="margin-top: 62px; margin-left: 127px">
+					
+                    <span class="Info" style="float: left;">
+                        <div class="player1_Nick" id="player1_Nick">
+                            <font id="player1_nickname">
+                            </font>
+                        </div>
+                        <div class="player1_UserLevel" id="player1_UserLevel">
+                            <font id="player1_level">
+                            </font>
+                        </div>
+                        <div class="player1_UserPoint" id="player1_UserPoint">
+                            <font id="player1_point">
+                            </font>
+                        </div>
+                    </span>
+                    <span class="Profile" style="float: left;">
+                        <div class="player1_Imoticon" id="player1_Imoticon">
+                            <img class="player1_img" id="player1_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span>
+                </div>
+                <div class="player3" id="player3" style="margin-top: 26px; margin-left: 127px">
+                    <span class="Info" style="float: left;">
+                        <div class="player3_Nick" id="player3_Nick">
+                            <font id="player3_nickname">
+                            </font>
+                        </div>
+                        <div class="player3_UserLevel" id="player3_UserLevel">
+                            <font id="player3_level">
+                            </font>
+                        </div>
+                        <div class="player3_UserPoint" id="player3_UserPoint">
+                            <font id="player3_point">
+                            </font>
+                        </div>
+                    </span>
+                    <span class="Profile" style="float: left;">
+                        <div class="player3_Imoticon" id="player3_Imoticon">
+                            <img class="player3_img" id="player3_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span>
+                </div>
+                <div class="player5" id="player5" style="margin-top: 26px; margin-left: 527px">
+                    <span class="Info" style="float: left;">
+                        <div class="player5_Nick" id="player5_Nick">
+                            <font id="player5_nickname">
+                            </font>
+                        </div>
+                        <div class="player5_UserLevel" id="player5_UserLevel">
+                            <font id="player5_level">
+                            </font>
+                        </div>
+                        <div class="player5_UserPoint" id="player5_UserPoint">
+                            <font id="player5_point">
+                            </font>
+                        </div>
+                    </span>
+                    <span class="Profile" style="float: left;">
+                        <div class="player5_Imoticon" id="player5_Imoticon">
+                            <img class="player5_img" id="player5_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span>
+                </div>
+                <div class="player7" id="player7" style="margin-top: 26px; margin-left: 127px">
+                    <span class="Info" style="float: left;">
+                        <div class="player7_Nick" id="player7_Nick">
+                            <font id="player7_nickname">
+                            </font>
+                        </div>
+                        <div class="player7_UserLevel" id="player7_UserLevel">
+                            <font id="player7_level">
+                            </font>
+                        </div>
+                        <div class="player7_UserPoint" id="player7_UserPoint">
+                            <font id="player7_point">
+                            </font>
+                        </div>
+                    </span>
+                    <span class="Profile" style="float: left;">
+                        <div class="player7_Imoticon" id="player7_Imoticon">
+                            <img class="player7_img" id="player7_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span>
+                </div>
+            </div>
+            <div class="center">
+                <!-- 이미지 뭉개지는게 아니고 repeat 되는 거였음 -->
+                <div class="center_question" style="margin-top: 10px;">
+                    <!-- <table class="question_table" id="question_table" width="180" height="26" background="/question.png" cellpadding="5" cellspacing="0"  style="visibility:hidden;"> -->
+                    <table class="question_table" id="question_table" width="185" height="30" background="/question.png" cellpadding="5" cellspacing="0" style="visibility:hidden; background-repeat:no-repeat;">
+                        <tr>
+                            <td valign="top">
+                                <font color="#000000" id="question_font">
+                                </font>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="center_canvas" style="margin-top: 21px; margin-left: 24px">
+                    <!--<canvas id="canvas" width="600" height="400" oncontextmenu="return false;">-->
+                    <canvas id="canvas" width="517" height="330" oncontextmenu="return false;" style="margin-left: 3px;">
+                    </canvas>
+                </div>
+                <div class="center_color" style="margin-top: 7px;">
+                    <span id="blackspan"><img id="black" src="/blackp.png" onclick="colorChange(id);"></span>
+                    <span id="redspan"><img id="red" src="/red.png" onclick="colorChange(id);"></span>
+                    <span id="bluespan"><img id="blue" src="/blue.png" onclick="colorChange(id);"></span>
+                    <span id="greenspan"><img id="green" src="/green.png" onclick="colorChange(id);"></span>
+                    <span id="yellowspan"><img id="yellow" src="/yellow.png" onclick="colorChange(id);"></span>
+                    <span id="whitespan"><img id="white" src="/white.png" onclick="colorChange(id);"></span>
+                    <span id="erasespan"><img id="erase" src="/erase.png" onclick="colorChange(id);"></span>
+                    <span id="eraseallspan"><img id="eraseall" src="/eraseall.png" onmouseover='this.src="/eraseallp.png"'"' onclick="fillout(id);"></span>
+                    
+                    <span id="shiftspan" style="display: none; visibility:hidden;">
+                    <img id="shift2" src="/shift2.png" onclick="shiftButton();" style="position:absolute; top:500px; left: 660px">
+                    </span>
+                    
+                    <span id="altspan" style="display: none; visibility:hidden;">
+                    <img id="alt" src="/alt2.png"  onclick="altButton();" style="position:absolute; top:500px; left: 710px">
+                    </span>
+					
+					<span id="handspan" style="display: none; visibility:hidden;">
+                    <img id="alt" src="/hand.png"  onclick="handButton();" style="position:absolute; top:500px; left: 760px">
+                    </span>
+                    
+                    
+                </div><!-- 나중에 위치 안맞으면 채팅 창이랑 timer 랑 따로 관리 -->
+                <div class="center_io" style="margin-top: 87px; margin-left: 30px">
+                    <!-- 시연 위해 잠깐 hidden 처리-->
+                    <span id="time_point"><input type="button" value="time_point" style="visibility: hidden;"></span>
+                  
+                    
+                    <span id="chatting" style="padding-top: 100px; margin-left: 156px" style="visibility: hidden;"><input type="text" id="msg" class="msg" size="32" rows="1"/></span>
+                </div>
+                <div class="center_level" style="margin-top: 30px">
+                    <!-- 시연 위해 잠깐--><input type="button" value="level progress" style="visibility: hidden;">
+                </div>
+            </div>
+            <div class="right">
+                <div class="player2" id="player2" style="margin-top: 65px; margin-left: 24px">
+                    <span class="Profile" style="float: left;">
+                        <div class="player2_Imoticon" id="player2_Imoticon">
+                            <img class="player2_img" id="player2_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span><span class="Info" style="float: left;">
+                        <div class="player2_Nick" id="player2_Nick">
+                            <font id="player2_nickname">
+                            </font>
+                        </div>
+                        <div class="player2_UserLevel" id="player2_UserLevel">
+                            <font id="player2_level">
+                            </font>
+                        </div>
+                        <div class="player2_UserPoint" id="player2_UserPoint">
+                            <font id="player2_point">
+                            </font>
+                        </div>
+                    </span>
+                </div>
+                <div class="player4" id="player4" style="margin-top: 27px; margin-left: 24px">
+                    <span class="Profile" style="float: left;">
+                        <div class="player4_Imoticon" id="player4_Imoticon">
+                            <img class="player4_img" id="player4_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span><span class="Info" style="float: left;">
+                        <div class="player4_Nick" id="player4_Nick">
+                            <font id="player4_nickname">
+                            </font>
+                        </div>
+                        <div class="player4_UserLevel" id="player4_UserLevel">
+                            <font id="player4_level">
+                            </font>
+                        </div>
+                        <div class="player4_UserPoint" id="player4_UserPoint">
+                            <font id="player4_point">
+                            </font>
+                        </div>
+                    </span>
+                </div>
+                <div class="player6" id="player6" style="margin-top: 27px; margin-left: 24px">
+                    <span class="Profile" style="float: left;">
+                        <div class="player6_Imoticon" id="player6_Imoticon">
+                            <img class="player6_img" id="player6_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span><span class="Info" style="float: left;">
+                        <div class="player6_Nick" id="player6_Nick">
+                            <font id="player6_nickname">
+                            </font>
+                        </div>
+                        <div class="player6_UserLevel" id="player6_UserLevel">
+                            <font id="player6_level">
+                            </font>
+                        </div>
+                        <div class="player6_UserPoint" id="player6_UserPoint">
+                            <font id="player6_point">
+                            </font>
+                        </div>
+                    </span>
+                </div>
+                <div class="player8" id="player8" style="margin-top: 27px; margin-left: 24px">
+                    <span class="Profile" style="float: left;">
+                        <div class="player8_Imoticon" id="player8_Imoticon">
+                            <img class="player8_img" id="player8_img" src="/imo.jpg" style="visibility: hidden;">
+                        </div>
+                    </span><span class="Info" style="float: left;">
+                        <div class="player8_Nick" id="player8_Nick">
+                            <font id="player8_nickname">
+                            </font>
+                        </div>
+                        <div class="player8_UserLevel" id="player8_UserLevel">
+                            <font id="player8_level">
+                            </font>
+                        </div>
+                        <div class="player8_UserPoint" id="player8_UserPoint">
+                            <font id="player8_point">
+                            </font>
+                        </div>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+        </div>
+        <table class="player1_bubble_table" id="player1_bubble_table" width="120" height="100" background="/bubble.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player1_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <table class="player2_bubble_table" id="player2_bubble_table" width="120" height="100" background="/bubble2.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player2_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <table class="player3_bubble_table" id="player3_bubble_table" width="120" height="100" background="/bubble.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player3_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <table class="player4_bubble_table" id="player4_bubble_table" width="120" height="100" background="/bubble2.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player4_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <table class="player5_bubble_table" id="player5_bubble_table" width="120" height="100" background="/bubble.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player5_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <table class="player6_bubble_table" id="player6_bubble_table" width="120" height="100" background="/bubble2.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player6_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <table class="player7_bubble_table" id="player7_bubble_table" width="120" height="100" background="/bubble.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player7_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <table class="player8_bubble_table" id="player8_bubble_table" width="120" height="100" background="/bubble2.png" cellpadding="5" cellspacing="0" style="visibility:hidden;">
+            <tr>
+                <td valign="top">
+                    <font color="#000000" id="player8_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <!-- <div class="rounddiv"> -->
+        <!--<table class="round_table" id="round_table" cellpadding="5" cellspacing="0" style=" display: none; visibility:hidden; table-layout:fixed ; position: absolute; top: 250px; left: 350px;">-->
+		<table class="round_table" id="round_table" cellpadding="5" cellspacing="0" style=" display: none; visibility:hidden; table-layout:fixed">
+            <tr>
+                <td id="round_count" valign="top" width="180" height="40" style="background-repeat:no-repeat; ">
+                    <font color="#000000" id="player1_font">
+                    </font>
+                </td>
+            </tr>
+            <tr>
+                <td id="round_info" valign="top" width="330" height="82" style="background-repeat:no-repeat; table-layout:fixed">
+                    <font color="#000000" id="player1_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+		
+        <table class="correct_table" id="correct_table" cellpadding="5" cellspacing="0" style="display: none; visibility:hidden">
+            <tr>
+                <td class="correct" id="correct" valign="top" width="386" height="105" style="background-repeat:no-repeat; ">
+                    <font color="#000000" id="correct1_font">
+                    </font>
+                </td>
+            </tr>
+        </table>
+		
+		<img class="player1_blink" id="player1_blink"  alt="alert" src="/blink.gif" style="visibility: hidden;">
+		<img class="player2_blink" id="player2_blink"  alt="alert" src="/blink2.gif" style="visibility: hidden;">
+		<img class="player3_blink" id="player3_blink"  alt="alert" src="/blink.gif" style="visibility: hidden;">
+		<img class="player4_blink" id="player4_blink"  alt="alert" src="/blink2.gif" style="visibility: hidden;">
+		<img class="player5_blink" id="player5_blink"  alt="alert" src="/blink.gif" style="visibility: hidden;">
+		<img class="player6_blink" id="player6_blink"  alt="alert" src="/blink2.gif" style="visibility: hidden;">
+		<img class="player7_blink" id="player7_blink"  alt="alert" src="/blink.gif" style="visibility: hidden;">
+		<img class="player8_blink" id="player8_blink"  alt="alert" src="/blink2.gif" style="visibility: hidden;">
+		
+		
+		<img class="player1_turn" id="player1_turn"  alt="alert" src="/turn.png" style="visibility: hidden;">
+		<img class="player2_turn" id="player2_turn"  alt="alert" src="/turn2.png" style="visibility: hidden;">
+		<img class="player3_turn" id="player3_turn"  alt="alert" src="/turn.png" style="visibility: hidden;">
+		<img class="player4_turn" id="player4_turn"  alt="alert" src="/turn2.png" style="visibility: hidden;">
+		<img class="player5_turn" id="player5_turn"  alt="alert" src="/turn.png" style="visibility: hidden;">
+		<img class="player6_turn" id="player6_turn"  alt="alert" src="/turn2.png" style="visibility: hidden;">
+		<img class="player7_turn" id="player7_turn"  alt="alert" src="/turn.png" style="visibility: hidden;">
+		<img class="player8_turn" id="player8_turn"  alt="alert" src="/turn2.png" style="visibility: hidden;">
+		
+		
+		
+		<div id="layer1" style="width:182px; height:17px; position:absolute; left:300px; top:600px; z-index:1;">
+        	<p><div id="x"></div></p>
+    	</div>
+		
+		<img class="ready" id="ready"  alt="alert" src="/ready.png" style=" display: none; visibility: hidden;  position:absolute; left:400px; top:240px;">
+		<img class="play" id="play"  alt="alert" src="/play.png" style="display: none; visibility: hidden;  position:absolute; left:400px; top:240px;">
+		
+		
+		<img class="end" id="end"  src="/end.png" style="display: none; visibility: hidden; position:absolute; left:300px; top:160px;">
+		
+		
+		
+		
+		<font class="play1_end_nick" id="player1_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:265px;"></font>
+		<font class="play1_end_point" id="player1_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:265px;"></font>
+		
+		<font class="play2_end_nick" id="player2_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:295px;"></font>
+		<font class="play2_end_point" id="player2_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:295px;"></font>
+		
+		<font class="play3_end_nick" id="player3_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:325px;"></font>
+		<font class="play3_end_point" id="player3_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:325px;"></font>
+		
+		<font class="play4_end_nick" id="player4_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:354px;"></font>
+		<font class="play4_end_point" id="player4_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:354px;"></font>
+		
+		<font class="play5_end_nick" id="player5_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:383px;"></font>
+		<font class="play5_end_point" id="player5_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:383px;"></font>
+		
+		<font class="play6_end_nick" id="player6_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:411px;"></font>
+		<font class="play6_end_point" id="player6_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:411px;"></font>
+		
+		<font class="play7_end_nick" id="player7_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:440px;"></font>
+		<font class="play7_end_point" id="player7_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:440px;"></font>
+		
+		<font class="play8_end_nick" id="player8_end_nick" style="display: none; visibility: hidden;  position:absolute; left:360px; top:470px;"></font>
+		<font class="play8_end_point" id="player8_end_point" style="display: none; visibility: hidden;  position:absolute; left:490px; top:470px;"></font>
+		
+		
+    </body>
+</html>
