@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <link rel="Stylesheet" href="/StyleSheet2.css" />
+        <script src= "http://code.jquery.com/jquery-1.7.1.js"></script>
+        <script src="/js/jquery-ui-1.8.16.custom.min.js "></script>
+        <script src= "/socket.io/socket.io.js"></script>
+		
+		<!--잠깐 추가ㅣ-->
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+    	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.1/jquery-ui.min.js"></script>
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/themes/redmond/jquery-ui.css" type="text/css" />
+		
+        <script>
+            var $dialog = null;
+            
+            jQuery.showModalDialog = function(options){
+            
+                var defaultOptns = {
+                    url: null,
+                    dialogArguments: null,
+                    height: 'auto',
+                    width: 'auto',
+                    position: 'center',
+                    resizable: true,
+                    scrollable: true,
+                    onClose: function(){
+                    },
+                    returnValue: null,
+                    doPostBackAfterCloseCallback: false,
+                    postBackElementId: null
+                };
+                
+                var fns = {
+                    close: function(){
+                        opts.returnValue = $dialog.returnValue;
+                        $dialog = null;
+                        opts.onClose();
+                        if (opts.doPostBackAfterCloseCallback) {
+                            postBackForm(opts.postBackElementId);
+                        }
+                    },
+                    adjustWidth: function(){
+                        $frame.css("width", "100%");
+                    }
+                };
+                
+                // build main options before element iteration
+                
+                var opts = $.extend({}, defaultOptns, options);
+                
+                var $frame = $('<iframe id="iframeDialog" />');
+                
+                if (opts.scrollable) 
+                    $frame.css('overflow', 'auto');
+                
+                $frame.css({
+                    'padding': 0,
+                    'margin': 0,
+                    'padding-bottom': 10
+                });
+                
+                var $dialogWindow = $frame.dialog({
+                    autoOpen: true,
+                    modal: true,
+                    width: opts.width,
+                    height: opts.height,
+                    resizable: opts.resizable,
+                    position: opts.position,
+                    overlay: {
+                        opacity: 0.5,
+                        background: "black"
+                    },
+                    close: fns.close,
+                    resizeStop: fns.adjustWidth
+                });
+                
+                $frame.attr('src', opts.url);
+                fns.adjustWidth();
+                
+                $frame.load(function(){
+                    if ($dialogWindow) {
+                        var maxTitleLength = 50;
+                        var title = $(this).contents().find("title").html();
+                        
+                        if (title.length > maxTitleLength) {
+                            title = title.substring(0, maxTitleLength) + '...';
+                        }
+                        $dialogWindow.dialog('option', 'title', title);
+                    }
+                });
+                
+                $dialog = new Object();
+                $dialog.dialogArguments = opts.dialogArguments;
+                $dialog.dialogWindow = $dialogWindow;
+                $dialog.returnValue = null;
+            }
+            
+            function postBackForm(targetElementId){
+                var theform;
+                theform = document.forms[0];
+                theform.__EVENTTARGET.value = targetElementId;
+                theform.__EVENTARGUMENT.value = "";
+                theform.submit();
+            }
+        </script>
+		
+		
+        <script>
+            
+            function getCookie(cName){
+            
+                cName = cName + '=';
+                var cookieData = document.cookie;
+                var start = cookieData.indexOf(cName);//indexOf() method는 string안의 명시된 값의 첫 번째 발생의 위치를 반환
+                var cValue = '';
+                if (start != -1) {
+                    start += cName.length;
+                    var end = cookieData.indexOf(';', start);//indexOf(찾을문자열, 시작위치)
+                    if (end == -1) 
+                        end = cookieData.length;
+                    cValue = cookieData.substring(start, end);//substring(시작, 종료),substr(시작,길이) -문자열반환함수 
+                }
+                
+                return cValue;
+                
+            }
+        </script>
+        <script type="text/javascript">
+            
+            
+            var sb;
+			var socket = io.connect();
+			
+			var myname = getCookie('name');
+        
+            function popup_page(url, w, h){
+            
+               //잠깐 주석
+			   /*
+                var x = (screen.availWidth - w) / 2;
+                var y = (screen.availHeight - h) / 2;
+                var room = '';
+                
+                //드디어 해결
+                sb = window.showModalDialog('/make', "", "width=" + w + ",height=" + h + ",top=" + y + ",left=" + x + ",nenubar=no,status=no,toolbar=no");
+				  
+                room = document.getElementById('roomname').value;
+                  
+                if (room == '') {
+                    alert('방 제목을 입력하세요.');
+                    return;
+                }
+                
+                
+                if(myname ==null){
+					alert('쿠키 없다');
+					return;
+				}
+				
+				//'620','270'
+				w= 900;
+                //새로 만든 이벤트 
+                socket.emit('participate', room, myname, 'addroom');*/
+				var url = '/make';
+                $.showModalDialog({
+                    url: url,
+                    //dialogArguments: 'www.extremedev.blogspot.com',
+                    height: 350,
+                    width: 400,
+                    scrollable: false,
+                    onClose: function(){
+                        var returnedValue = this.returnValue;
+                        
+                        document.getElementById('roomname').value = returnedValue;
+                        
+                        room = document.getElementById('roomname').value;
+                        
+                        if (room == '') {
+                            alert('방 제목을 입력하세요.');
+                            return;
+                        }
+                        
+                        if (myname == null) {
+                            alert('쿠키 없다');
+                            return;
+                        }
+                        
+                        
+                        //새로 만든 이벤트 
+                        socket.emit('participate', room, myname, 'addroom');
+                    }
+                });
+                
+            }
+			
+
+            $(document).ready(function(){
+				
+				
+				// AJAX 수행(전체 기존에 있던 방 보여주기 위해 ,array로 받음)
+                $.getJSON('/room', function(data){
+			
+                    // 반복문
+                    $.each(data, function(index, item){
+            			var opts = document.RoomListform.RoomListselect.options;
+						
+						opts[opts.length] = new Option(item, item);
+						
+			
+                    });
+ 
+                });
+				
+				
+				//처음 페이지 로드 될때 경우
+                $.getJSON('/user', function(data){
+                    // 반복문
+                    $.each(data, function(index, item){
+                        var opts = document.UserListform.UserListselect.options;
+                        var exist_alredy = 0;
+						
+			            for (i = 0; i < opts.length; i++) {
+                       	 
+                            if (opts[i].value == item) {
+						    
+                                exist_alredy = 1;
+                        
+                            }
+                            
+                        }
+						
+					
+                        if (exist_alredy == 0) {
+                        
+                            opts[opts.length] = new Option(item, item);
+                            
+                        }
+                        
+                        
+                    });
+                });
+				
+				//새로운 사용자 들어올 때 필요
+				socket.emit('auto',myname);
+				
+				socket.on('auto', function(data){
+				   var opts = document.UserListform.UserListselect.options;
+				   var exist_alredy = 0;
+				   
+				   
+				   for(i=0 ;i<opts.length; i++){
+				   
+				   		if(opts[i].value==data){
+					    
+							exist_alredy=1;
+							
+					
+						}
+				   }
+				   
+				   if(exist_alredy==0){
+				   
+				   	opts[opts.length] = new Option(data, data);
+				   	
+				   }
+				   
+					
+				});
+				
+				
+				
+				document.getElementById('nickname').innerHTML=myname;
+				
+				
+				//문제: 모든 사용자가 로비에 있을 때 자동으로 location으로 넘어가 지는데
+				//socket 값 저장 안도니 있으므로? nick 페이지로 이동된다.
+				//그러므로 location으로 넘어가는 애는 방 만든애만 그렇게 되게 해야 된다.
+				//서버에서 전체 emit하고  private emit을 주게 해야 된다.
+                socket.on('addroom', function(data, success){
+                	
+					
+					if(success ==0){
+						alert('똑같은 이름의 방이 있습니다.');
+	
+					}
+					
+					if (success == 1) {
+									
+						var opts = document.RoomListform.RoomListselect.options;
+						opts[opts.length] = new Option(data, data);
+						
+					}
+
+                });
+				
+				socket.on('location', function(data){
+					setTimeout(function(){
+                    
+                        location = '/canvas/' + data;
+                    }, 10);
+					
+				});
+          
+				
+				
+                
+                socket.on('lobby_message', function(data){
+                
+                    var ca = document.getElementById('ChatArea');
+                    var p = document.createElement("div");
+  
+                    if (data.name != null) {
+                        var span = document.createElement("span");
+                        span.innerHTML = data.name + ': ';
+                        p.appendChild(span);
+                    }
+					
+                    p.appendChild(document.createTextNode(data.message));
+                    ca.appendChild(p);
+                    ca.scrollTop = 50000;
+                    
+     
+                });
+				
+            
+                $('.ChatLine').keyup(function(event){
+
+                    if (event.keyCode == 13) { // 13이 enter키 코드 값이다.
+ 
+                        socket.emit('lobby_message', {
+                            name: myname,
+                            message: $('.ChatLine').val(),
+                            date: new Date().toUTCString(),
+                      
+                        });
+                        
+                        document.getElementById('ChatLine').value = '';
+                    }
+     
+                });
+				
+				
+    
+      	 });
+
+			
+			function showUser(value){
+				
+				//alert(value);
+				//alert(myname);
+			       var room = value;
+					
+					if(myname ==null){
+						alrt('쿠키 없다');
+						return;
+					}
+					
+					//새로 만든 이벤트 
+					socket.emit('participate', room,myname,'join');
+					
+					
+					//여기 안에다 넣어보라네?
+					setTimeout(function () {
+						location = '/canvas/' + room;
+
+					}, 10);
+			}
+            
+        </script>
+        <title>Web Chat</title>
+    </head>
+    <body onContextmenu="return false">
+        <div class="header" id=a>
+        	<!-- onmousedown="this.src='/makeroomp.png';" onmouseup="this.src='/makeroomb.png';" -->
+        	<img id="makeroomb" src="/makeroomb.png"  onmouseover="this.src='/makeroomon.png';" onmouseout="this.src='/makeroomb.png';" onclick="popup_page('/MakeRoom','620','270')" ontouchstart="popup_page('/MakeRoom','620','270')" >
+        </div>
+        <div class="contents">
+            <div id=a>
+                <span class="RoomList" style="float: left">
+                    <form name="RoomListform" class="RoomListform" id="RoomListform">
+                        <select name="RoomListselect" class="RoomListselect" onchange="showUser(this.value)" id="RoomListselect" size=21 style=" width:596px; height:360px">
+                            <option name=one value=one onclick="test()">one </option>
+                            <option name=two value=two>two </option>
+                            <option name=three value=three>three </option>
+                            <option name=four value=four>four </option>
+                            <option name=five value=five>five </option>
+                        </select>
+                    </form>
+                </span>
+                <!-- span 할때 style="float: left" 앞 뒤에꺼 다 해줘야 적용 된다-->
+				<span class="UserList" style="float: left">
+                    <form name="UserListform" class="UserListform" id="UserListform">
+                        <select name="UserListselect" class="UserListselect" id="UserListselect" size=19 style="margin-left: 59px; width:270px ; height:327px">
+                            <option name=one value=one>1 </option>
+                            <option name=two value=two>2 </option>
+                            <option name=three value=three>3 </option>
+                            <option name=four value=four>4 </option>
+                        </select>
+                    </form>
+                </span>
+            </div>
+            <div id=b>
+                <span class="ChattingRoom" style="float: left;">
+                    <div id="ChatArea" style='border:1px solid #aaa; width:595px; height:198px; overflow:auto;'>
+                    	<input type="text" id="ChatLine" class="ChatLine" size="81" rows="1" onkeyup="hi()" style=" width:525px; height:15px"/>
+					</div>
+                    <!--</span>--><!--<span class="ChatLine2" style="display:inline-block">-->
+					
+                    
+                </span>
+				
+                <span class="UserInfo" style="float: left;">
+				 	
+					<span class="Profile" style="float: left;">
+                    	<div class="Imoticon">
+                    		<img class="Imoimg" src="/imo.jpg">
+                    	</div>
+					</span>	
+						
+					<span class="Info" style="float: left;">
+						<div class="Nick">
+							<font id="nickname"> Guest </font>
+						</div>
+						<div class="UserLevel">
+							<font id="level"> F </font>
+						</div>
+					</span>
+                    	
+                    
+                </span>
+				
+            </div>
+        </div>
+        <p>
+          <!--  <input type="button" onclick="popup_page('/MakeRoom','620','270')" value="이벤트01">-->
+        </p><input type="text" id="roomname" class="roomname" size="4" rows="1" style="display: none; visibility:hidden;"/>
+    </body>
+</html>

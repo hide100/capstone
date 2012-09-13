@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Id Page</title>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <link rel="stylesheet"  href="http://code.jquery.com/mobile/1.0a3/jquery.mobile-1.0a3.min.css" />
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.5.min.js"></script> 	
+	<script type="text/javascript" src="http://code.jquery.com/mobile/1.0a3/jquery.mobile-1.0a3.min.js"></script>
+    
+    
+    <script>
+    
+		function submitCheck(){
+			if(document.form.name.value==""){
+				alert("닉네임을 입력하세요.");
+				return false;
+			}else{
+				document.form.submit();
+			}
+		}
+
+    </script>
+</head>
+<body>
+<!--  
+	<form name="form" method="post" onsubmit="return submitCheck()">
+		NICKNAME
+		<input type="text" name="name" id="name"/>
+ 
+        <input type="submit" value="click" />
+ 	</form>
+-->
+<div data-role="page" id="login" >
+
+  <div data-role="content" style="padding:0; border:0;  width:200px;">
+    <form name="form" method="post" onsubmit="return submitCheck()">
+		<div>
+			<span style="float: left; 	position: absolute; top: 20px; left: 49px;  width:400px; height:360px"> 
+				<label for="NickName">NickName:</label> 
+				<input type="text" id="name" name="name" />
+			</span> 
+			
+			<span style="float: left; 	position: absolute; top: 10px; left: 420px;  width:200px; height:360px">
+				<button id="btnLogin" type="submit" data-theme="a" data-icon="check">Log In</button>
+			</span>
+		</div>
+    </form>
+  </div>
+    
+</div>
+</body>
+</html>

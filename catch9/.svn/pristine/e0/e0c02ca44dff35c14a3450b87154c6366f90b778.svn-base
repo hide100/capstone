@@ -1,0 +1,564 @@
+body
+{
+    background: silver;
+}
+
+.MainBody {
+    width: 1024px;
+	height: 615px;
+}
+
+.header {
+    width: 1024px;
+	height: 79px;
+	/* background: url('C:\Users\kyuhak\workspace\test2\image\header.jpg');*/
+	background-image: url('header.jpg');
+
+}
+
+
+.left {
+    width: 228px;
+    height: 615px;
+ 
+    float: left;
+	/*background: url('C:\Users\kyuhak\workspace\test2\image\leftsidebar.jpg');*/
+	background-image: url('leftsidebar.jpg');
+}
+
+
+.center {
+    width: 568px;
+	height: 615px;
+ 
+	float: left;
+	/*background: url('C:\Users\kyuhak\workspace\test2\image\contents.jpg');*/
+	background-image: url('contents.jpg');
+}
+
+
+.right {
+    width: 228px;
+    height: 615px;
+
+    float: left;
+	/*background: url('C:\Users\kyuhak\workspace\test2\image\rightsidebar.jpg');*/
+	background-image: url('rightsidebar.jpg');
+    
+}
+
+.footer{
+	width: 1024px;
+	height: 73px;
+
+	background-image: url('footer.jpg');
+	
+}
+
+#blackspan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 45px;
+}
+
+#redspan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 40px;
+}
+
+#bluespan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 36px;
+}
+
+#greenspan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 34px;
+}
+
+#yellowspan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 32px;
+}
+
+#whitespan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 28px;
+}
+
+
+#erasespan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 40px;
+}
+
+
+#eraseallspan {
+    position: relative;
+    width: 32px;
+    height: 30px;
+    left: 60px;
+}
+
+
+/*
+#shiftspan {
+    position: absolute;
+    top: 250px;
+    left: 350px;
+}
+
+#altspan {
+    position: absolute;
+    top: 250px;
+    left: 350px;
+}
+*/
+
+/*갑자기 적용 안됌 */
+
+#round_table {
+    position: absolute;
+	top: 250px;
+    left: 350px;
+}
+
+
+#correct_table {
+    position: absolute;
+	top: 250px;
+    left: 350px;
+}
+
+/*
+#bubblediv{
+	position: relative;
+}*/
+
+#player1_bubble_table{
+	position: absolute;
+	top: 143px;
+	left: 220px;
+}
+
+#player3_bubble_table{
+	position: absolute;
+	top: 253px;
+	left: 220px;
+}
+
+#player5_bubble_table{
+	position: absolute;
+	top: 363px;
+	left: 220px;
+}
+
+#player7_bubble_table{
+	position: absolute;
+	top: 473px;
+	left: 220px;
+}
+
+#player2_bubble_table{
+	position: absolute;
+	top: 143px;
+	left: 703px;
+}
+
+#player4_bubble_table{
+	position: absolute;
+	top: 253px;
+	left: 703px;
+}
+
+#player6_bubble_table{
+	position: absolute;
+	top: 363px;
+	left: 703px;
+}
+
+#player8_bubble_table{
+	position: absolute;
+	top: 473px;
+	left: 703px;
+}
+
+
+
+
+#player1_Nick{
+	position: absolute;
+	top: 160px;
+	left: 70px;
+}
+
+
+#player1_UserLevel{
+	position: absolute;
+	top: 185px;
+	left: 70px;
+}
+
+#player1_UserPoint{
+	position: absolute;
+	top: 209px;
+	left: 70px;
+}
+
+
+
+
+#player3_Nick{
+	position: absolute;
+	top: 272px;
+	left: 70px;
+}
+
+
+#player3_UserLevel{
+	position: absolute;
+	top: 295px;
+	left: 70px;
+}
+
+#player3_UserPoint{
+	position: absolute;
+	top: 319px;
+	left: 70px;
+}
+
+
+
+#player5_Nick{
+	position: absolute;
+	top: 380px;
+	left: 70px;
+}
+
+
+#player5_UserLevel{
+	position: absolute;
+	top: 406px;
+	left: 70px;
+}
+
+#player5_UserPoint{
+	position: absolute;
+	top: 430px;
+	left: 70px;
+}
+
+
+
+#player7_Nick{
+	position: absolute;
+	top: 490px;
+	left: 70px;
+}
+
+
+#player7_UserLevel{
+	position: absolute;
+	top: 515px;
+	left: 70px;
+}
+
+#player7_UserPoint{
+	position: absolute;
+	top: 539px;
+	left: 70px;
+}
+
+
+
+
+
+
+
+#player2_Nick{
+	position: absolute;
+	top: 165px;
+	left: 920px;
+}
+
+
+#player2_UserLevel{
+	position: absolute;
+	top: 189px;
+	left: 920px;
+}
+
+#player2_UserPoint{
+	position: absolute;
+	top: 213px;
+	left: 920px;
+}
+
+
+
+#player4_Nick{
+	position: absolute;
+	top: 275px;
+	left: 920px;
+}
+
+
+#player4_UserLevel{
+	position: absolute;
+	top: 298px;
+	left: 920px;
+}
+
+#player4_UserPoint{
+	position: absolute;
+	top: 322px;
+	left: 920px;
+}
+
+
+#player6_Nick{
+	position: absolute;
+	top: 384px;
+	left: 920px;
+}
+
+
+#player6_UserLevel{
+	position: absolute;
+	top: 408px;
+	left: 920px;
+}
+
+#player6_UserPoint{
+	position: absolute;
+	top: 432px;
+	left: 920px;
+}
+
+#player8_Nick{
+	position: absolute;
+	top: 494px;
+	left: 920px;
+}
+
+
+#player8_UserLevel{
+	position: absolute;
+	top: 517px;
+	left: 920px;
+}
+
+#player8_UserPoint{
+	position: absolute;
+	top: 541px;
+	left: 920px;
+}
+
+
+#player1_img{
+	position: absolute;
+	top: 148px;
+	left: 135px;
+	
+}
+
+#player3_img{
+	position: absolute;
+	top: 258px;
+	left: 135px;
+	
+}
+
+#player5_img{
+	position: absolute;
+	top: 370px;
+	left: 135px;
+	
+}
+
+
+#player7_img{
+	position: absolute;
+	top: 480px;
+	left: 135px;
+	
+}
+
+
+
+
+
+
+
+
+#player2_img{
+	position: absolute;
+	top: 151px;
+	left: 827px;
+	
+}
+
+#player4_img{
+	position: absolute;
+	top: 260px;
+	left: 827px;
+	
+}
+
+#player6_img{
+	position: absolute;
+	top: 371px;
+	left: 827px;
+	
+}
+
+
+#player8_img{
+	position: absolute;
+	top: 481px;
+	left: 827px;
+	
+}
+
+
+
+
+#player1_blink{
+	position: absolute;
+	top: 135px;
+	left: 45px;
+	
+}
+
+#player3_blink{
+	position: absolute;
+	top: 245px;
+	left: 45px;
+	
+}
+
+
+#player5_blink{
+	position: absolute;
+	top: 355px;
+	left: 45px;
+	
+}
+
+
+#player7_blink{
+	position: absolute;
+	top: 465px;
+	left: 45px;
+	
+}
+
+
+#player2_blink{
+	position: absolute;
+	top: 137px;
+	left: 817px;
+	
+}
+
+#player4_blink{
+	position: absolute;
+	top: 247px;
+	left: 817px;
+	
+}
+
+
+#player6_blink{
+	position: absolute;
+	top: 357px;
+	left: 817px;
+	
+}
+
+
+#player8_blink{
+	position: absolute;
+	top: 467px;
+	left: 817px;
+	
+}
+
+
+
+
+
+
+#player1_turn{
+	position: absolute;
+	top: 135px;
+	left: 45px;
+	
+}
+
+#player3_turn{
+	position: absolute;
+	top: 245px;
+	left: 45px;
+	
+}
+
+
+#player5_turn{
+	position: absolute;
+	top: 355px;
+	left: 45px;
+	
+}
+
+
+#player7_turn{
+	position: absolute;
+	top: 465px;
+	left: 45px;
+	
+}
+
+
+#player2_turn{
+	position: absolute;
+	top: 137px;
+	left: 817px;
+	
+}
+
+#player4_turn{
+	position: absolute;
+	top: 247px;
+	left: 817px;
+	
+}
+
+
+#player6_turn{
+	position: absolute;
+	top: 357px;
+	left: 817px;
+	
+}
+
+
+#player8_turn{
+	position: absolute;
+	top: 467px;
+	left: 817px;
+	
+}
